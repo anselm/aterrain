@@ -1,11 +1,10 @@
 [
 
-{ "id":"user", "element":"a-gltf-model", "src":"assets/duck.gltf", "children":[ "b", "c", "d", "e", "f" ] },
-{ "id":"b", "element":"a-gltf-model", "src":"assets/duck.gltf" },
-{ "id":"c", "element":"a-gltf-model", "src":"assets/duck.gltf" },
-{ "id":"d", "element":"a-gltf-model", "src":"assets/duck.gltf" },
-{ "id":"e", "element":"a-gltf-model", "src":"assets/duck.gltf" },
-{ "id":"f", "element":"a-gltf-model", "src":"assets/duck.gltf" },
-{ "id":"g", "element":"a-gltf-model", "src":"assets/duck.gltf" }
+{ "id":"b", "aframe": { "element":"a-gltf-model", "src":"assets/duck.gltf" } },
+{ "id":"c", "aframe": { "element":"a-gltf-model", "src":"assets/duck.gltf" } },
+{ "id":"d", "aframe": { "element":"a-gltf-model", "src":"assets/duck.gltf" } },
+{ "id":"e", "aframe": { "element":"a-gltf-model", "src":"assets/duck.gltf" } },
+{ "id":"f", "aframe": { "element":"a-gltf-model", "src":"assets/duck.gltf" } },
+{ "id":"g", "aframe": { "element":"a-gltf-model", "src":"assets/duck.gltf" } }
 
 ]

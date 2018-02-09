@@ -10,9 +10,8 @@ class TileServer  {
   }
 
   ready(callback) {
-    let scope = this;
-    Cesium.when(scope.terrainProvider.readyPromise).then( function() {
-      scope.imageServer.ready(callback);
+    Cesium.when(this.terrainProvider.readyPromise).then( unused => {
+      this.imageServer.ready(callback);
     });
   }
 
@@ -41,6 +40,22 @@ class TileServer  {
     return best;
   }
 
+  elevation2lod(distance) {
+    let osm_earth_radius = 63727982;
+    let osm_earth_circumference = 2*Math.PI*osm_earth_radius;
+    // cannot get closer than the ground
+    if(distance < 1) distance = 1;
+    // no point in getting further away than the distance to see everything
+    if(distance > osm_earth_circumference / 2 ) distance = osm_earth_circumference / 2;
+    // the camera is setup such that if circumference is N then at a distance of N the entire surface is visible on screen.
+    // the visual field of view is a function of level of detail ie: fov=circumference/2^lod
+    // so 2^lod=cir/fov or log(cir/fov)=log(2^lod)
+    //let value = Math.log(osm_earth_circumference*2/distance) / Math.log(2);
+    // hmm... https://gis.stackexchange.com/questions/12991/how-to-calculate-distance-to-ground-of-all-18-osm-zoom-levels/142555#142555
+    let value2 = Math.floor(Math.log(osm_earth_circumference/distance,2));
+    return value2;
+  }
+
   ll2yx(data) {
 
     // This commented out approach is the more correct way to ask an arbitrary cesium terrain provider - but requires waiting for ready event
@@ -57,8 +72,14 @@ class TileServer  {
     let lod = scheme.lod = data.lod;
     let radius = scheme.radius = data.radius;
 
-    // get the meters width size of the tile (this is helpful for scaling buildings and the like)
-    scheme.meters_wide = ( 40075000 * Math.cos(data.lat * Math.PI / 180) / Math.pow(2,data.lod) / 2 );
+    let osm_earth_radius = 63727982;
+    let osm_earth_circumference = 2*Math.PI*osm_earth_radius;
+
+    // get the meters width size of the tile (this is vaguely helpful for scaling buildings but not really helpful for anything)
+    // note that this meters_wide is problematic - really isn't that useful generally speaking; it is best for flat maps only
+    // note that https://wiki.openstreetmap.org/wiki/Zoom_levels has a design flaw where they use +8 because their tiles are 256 pixels wide.
+    // (there's no reason to have the resolution of a tile have anything to do with estimation of meters width of a tile in the real world)
+    scheme.meters_wide = ( osm_earth_circumference * Math.cos(data.lat * Math.PI / 180) / Math.pow(2,data.lod) / 2 );
 
     // get number of tiles wide and tall - hardcoded to cesium terrain tiles TMS format
     scheme.w = Math.pow(2,lod+1);

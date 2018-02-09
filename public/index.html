@@ -1,0 +1,102 @@
+
+
+<style>
+body { background:#f0e0e0; overflow:hidden;}
+</style>
+
+
+<script src="https://threejs.org/build/three.min.js"></script>
+<script src="https://aframe.io/releases/0.7.1/aframe.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/webpack-cesium/1.37.0/webpack.cesium.js"></script>
+<script src="js/GLTFLoader.js"></script>
+<script src="js/ImageServer.js"></script>
+<script src="js/TileServer.js"></script>
+<script src="js/aframe-terrain.js"></script>
+<script src="js/agame.js"></script>
+
+
+<a-scene cursor="rayOrigin: mouse">
+
+  <!-- scene graph fragment for main game -->
+  <a-entity id="agame-main" visible="true" a-terrain="lat:45.557749; lon:-122.6794; lod:3; radius:10; elevation:100" agame-terrain="">
+
+    <a-sphere radius=10 wireframe=1></a-sphere>
+
+    <!--
+    <a-entity a-ll="lat:45.557749; lon:-122.6794; radius:10;">
+      <a-entity rotation="-90 0 0" scale="0.3 0.3 0.3">
+        <a-entity rotation="0 0 0">
+           <a-animation attribute="rotation"
+               dur="300"
+               fill="forwards"
+               from="0 0 0"
+               to="0 360 0"
+               repeat="indefinite"></a-animation>
+          <a-gltf-model src="assets/duck.gltf"></a-gltf-model>
+        </a-entity>
+      </a-entity>
+    </a-entity>
+
+    <a-entity a-ll="lat:45.557749; lon:-112.6794; radius:10;">
+      <a-entity rotation="-90 0 0" scale="0.3 0.3 0.3">
+        <a-entity rotation="0 0 0">
+           <a-animation attribute="rotation"
+               dur="1010"
+               fill="forwards"
+               from="0 -180 0"
+               to="0 180 0"
+               repeat="indefinite"></a-animation>
+          <a-gltf-model src="assets/duck.gltf"></a-gltf-model>
+        </a-entity>
+      </a-entity>
+    </a-entity>
+
+    <a-entity a-ll="lat:45.557749; lon:-102.6794; radius:10;">
+      <a-entity rotation="-90 0 0" scale="0.3 0.3 0.3">
+        <a-entity rotation="0 0 0">
+           <a-animation attribute="rotation"
+               dur="1500"
+               fill="backwards"
+               from="0 0 0"
+               to="0 360 0"
+               repeat="indefinite"></a-animation>
+          <a-gltf-model src="assets/duck.gltf"></a-gltf-model>
+        </a-entity>
+      </a-entity>
+    </a-entity>
+    -->
+
+  </a-entity>
+
+
+  <!-- scene graph fragment for player profile -->
+  <a-entity id="agame-profile" agame-profile="" visible="false">
+  </a-entity>
+
+  <!-- global buttons -->
+  <a-entity id="game-toggle"
+            position="4 4 0"
+            scale="1.5 1 1"
+            geometry="primitive: plane;"
+            material="src: assets/person.jpg; color: #ffffff; emissive:#404040; roughness: 1; metalness: 0">
+  </a-entity>
+
+  <!-- camera -->
+  <a-entity id="camera" camera="fov:45" mouse-cursor position="0 0 11"></a-entity>
+
+</a-scene>
+
+<script>
+
+function global_buttons() {
+  document.querySelector('#game-toggle').addEventListener('click', function() {
+    let visible = document.querySelector('#agame-main').getAttribute("visible");
+    document.querySelector('#agame-main').setAttribute("visible",visible?false:true);
+    document.querySelector('#agame-profile').setAttribute("visible",visible);
+  });
+}
+
+global_buttons();
+
+</script>
+

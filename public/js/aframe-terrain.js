@@ -27,25 +27,22 @@ TileServer.getInstance = function() {
 
 ///
 /// A-ll
-/// A geographic feature attached to a specified latitude and longitude
-/// Children features are placed appropriately
+/// If this is inside an a-terrain then the child will be on the surface at the specified latitude and longitude
+/// TODO should peek at the parent to find the radius rather than hard coded
 ///
 
 AFRAME.registerComponent('a-ll', {
   schema: {
        lat: {type: 'number', default:  0},
        lon: {type: 'number', default:  0},
-       lod: {type: 'number', default: 15},
     radius: {type: 'number', default:  1},
   },
   init: function() {
     let scheme = TileServer.getInstance().ll2yx(this.data);
-    let v = TileServer.getInstance().ll2v(scheme.latrad,scheme.lonrad,1);
+    let v = TileServer.getInstance().ll2v(scheme.latrad,scheme.lonrad,this.data.radius);
     this.el.object3D.position.set(v.x,v.y,v.z);
-    // should probably also set the rotation TODO
-    //var q = new THREE.Quaternion();
-    //q.setFromAxisAngle( new THREE.Vector3(0,1,0), THREE.Math.degToRad(-this.data.lon) );
-    //obj.quaternion.premultiply(q);
+    // TODO this is kind of inelegant; it would be better to precisely rotate the entity out to this location in space - see world rotator
+    this.el.object3D.lookAt( new THREE.Vector3(0,0,0) );
   },
 });
 
@@ -70,6 +67,7 @@ AFRAME.registerComponent('a-building', {
     GLTFLoader.load(scheme.building_url,function(gltf) {
       scope.el.setObject3D('mesh',gltf.scene);
       // fix building scale to reflect radius here - see https://wiki.openstreetmap.org/wiki/Zoom_levels
+      // TODO scaling is so confusing to me... I had to divide by 10 for some reason
       let earth_radius = 6372798.2;
       let s = data.radius/earth_radius;
       scope.el.object3D.scale.set(s,s,s);
@@ -130,11 +128,15 @@ AFRAME.registerComponent('a-terrain', {
   },
 
   init: function() {
-    let scope = this;
-    TileServer.getInstance().ready( function(){
-      scope.getUserInput();
-      scope.updateTiles();
-      scope.updatePose();
+    TileServer.getInstance().ready( unused => {
+      this.updateTiles();
+      this.updatePose();
+      this.el.addEventListener('a-terrain:navigate', evt => {
+        this.data.lat = evt.detail.lat;
+        this.data.lon = evt.detail.lon;
+        this.updateTiles();
+        this.updatePose();
+      });
     });
   },
 
@@ -171,120 +173,36 @@ AFRAME.registerComponent('a-terrain', {
 
   updatePose: function() {
 
-    if(!this.data.adjust) return;
+    let data = this.data;
 
-    let scope = this;
-    let data = scope.data;
+    // allow moving world?
+    if(!data.adjust) return;
 
-    // rotate such that the supplied lat, lon is at 0,0
-
+    // rotate the world such that the supplied lat, lon is at 0,0
     let obj = this.el.object3D;
 
+    // lazy way to get the world rotated correctly
     obj.rotation.set(0,0,0);
-
     var q = new THREE.Quaternion();
     q.setFromAxisAngle( new THREE.Vector3(0,1,0), THREE.Math.degToRad(-data.lon) );
     obj.quaternion.premultiply(q);
-
     q.setFromAxisAngle( new THREE.Vector3(1,0,0), THREE.Math.degToRad(data.lat) );
     obj.quaternion.premultiply(q);
 
-    // quick set to avoid delays even if stale
+    // quick set to avoid delays even if stale - ground level is not known yet but waiting for it causes visible delays
     let earth_radius = 6372798.2;
-    if(scope.data.groundLatched) {
-      let groundValue = scope.data.ground;
+    if(data.groundLatched) {
+      let groundValue = data.ground;
       obj.position.set(0,0,-(earth_radius+groundValue+data.elevation)*data.radius/earth_radius);
     }
 
     // get ground height
-    TileServer.getInstance().getGround(data,function(groundValue) {
-      scope.data.ground = groundValue;
-      scope.data.groundLatched = true;
+    TileServer.getInstance().getGround(data,groundValue => {
+      data.ground = groundValue;
+      data.groundLatched = true;
       obj.position.set(0,0,-(earth_radius+groundValue+data.elevation)*data.radius/earth_radius);
     });
   },
-
-  getUserInput: function() {
-    let scope = this;
-
-    let dragging = 0;
-    let dragstartx = 0;
-    let dragstarty = 0;
-    let dragstartlon = 0;
-    let dragstartlat = 0;
-
-    window.addEventListener("mousedown", function(e) {
-      dragging = 1;
-      e.preventDefault();
-    });
-    window.addEventListener("mouseup", function(e){
-      dragging = 0;
-      e.preventDefault();
-    });
-    window.addEventListener("mousemove", function(e){
-      if(dragging == 0) return;
-      if(dragging == 1) {
-        dragging = 2;
-        dragstartx = e.clientX;
-        dragstarty = e.clientY;
-        dragstartlon = scope.data.lon;
-        dragstartlat = scope.data.lat;
-      }
-      let x = e.clientX - dragstartx;
-      let y = e.clientY - dragstarty;
-      // TODO the exact scroll amount can be computed as a function of zoom
-      // TODO set min max
-      scope.data.lon = dragstartlon - x/100000;
-      scope.data.lat = dragstartlat + y/100000;
-      scope.updateTiles();
-      scope.updatePose();
-      e.preventDefault();
-    });
-    window.addEventListener("wheel",function(e) {
-      const deltaY = Math.max(-1, Math.min(1, e.deltaY));
-      // TODO the elevation should be precisely a function of radius! not absolute
-      // TODO the rate of change here should be computed as a function of radius!
-      // TODO set min max
-      // TODO set zoom level appropriately
-      scope.data.elevation += deltaY * 50;
-      if(scope.data.elevation < 10) scope.data.elevation = 10;
-      scope.updateTiles();
-      scope.updatePose();
-      e.preventDefault();
-    });
-
-    window.addEventListener("keydown", function(e) {
-      let camera = document.querySelector('#camera');
-      if(!camera) {
-        console.error("No camera setup with id #camera");
-        return;
-      }
-      let angle = camera.getAttribute('rotation').y;
-      let position = camera.getAttribute('position');
-      //console.log("camera is at x="+position.x+" y="+position.y+" z="+position.z+" angle="+angle);
-      let stride = 0.001; // TODO compute
-      switch(e.keyCode) {
-        case 73: scope.data.lat += stride; break;
-        case 74: scope.data.lon -= stride; break;
-        case 75: scope.data.lon += stride; break;
-        case 77: scope.data.lat -= stride; break;
-      }
-      /*
-      if(camera && e.keyCode == 32) {
-        let angle = camera.getAttribute('rotation').y;
-        let position = camera.getAttribute('position');
-        console.log("camera is at x="+position.x+" y="+position.y+" z="+position.z+" angle="+angle);
-        let stride = 0.001;// TODO FIX
-        scope.data.lon -= Math.sin(angle*Math.PI/180) * stride;
-        scope.data.lat += Math.cos(angle*Math.PI/180) * stride;
-      }
-      */
-      //if(e.keyCode == 74) scope.data.elevation -= 10;
-      //if(e.keyCode == 75) scope.data.elevation += 10;
-      scope.updateTiles();
-      scope.updatePose();
-    });
-  }
 
 });
 
