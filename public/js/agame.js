@@ -412,8 +412,8 @@ this.el.emit("a-terrain:navigate", {lat:this.data.lat, lon: this.data.lon, eleva
       // zoom in/out - roughly scaled by current elevation
       this.data.elevation += this.data.elevation * direction * 0.1;
 
-      // set far limit to the radius of the earth (TODO may want to make 1 = far and 0 = near... rather than hardcoded numbers)
-      if(this.data.elevation > world_circumference/2) this.data.elevation = world_circumference/2;
+      // limits
+      if(this.data.elevation > world_circumference) this.data.elevation = world_circumference;
 
       // set near limit to 1 meter
       if(this.data.elevation < 1) this.data.elevation = 1;
