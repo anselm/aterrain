@@ -1,18 +1,137 @@
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-// State manages all the game state, and obervers can listen to state changes if they wish...
-//
-// ...also has some helpers to produce 3js and aframe objects consistently in one place from state...
-//
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+/// network - from https://github.com/ubik2/aframe-network-component/blob/master/index.js
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+/*
+AFRAME.registerSystem('network', {
+  dependencies: ['position', 'rotation'],
+
+  schema: {
+    url: {
+      type: 'string',
+      default: null
+    },
+    port: {
+      type: 'number',
+      default: 4000
+    },
+    path: {
+      type: 'string',
+      default: '/chat'
+    }
+  },
+
+  onNetworkConnect: function () {
+    var self = this;
+    // unfortunately, our position and rotation attributes aren't set when we call this
+    self.socket.emit('spawn', {
+      position: {x: 0, y: 0, z: 0},
+      rotation: {x: 0, y: 0, z: 0}
+    });
+    self.socket.on('message', function (data) {
+      console.log(data);
+    }).on('spawn', function (data) {
+      var entityEl = document.createElement('a-box');
+      entityEl.setAttribute('network', {
+        local: false,
+        serverId: data.id
+      });
+      console.log("Spawning remote object: ", data.id);
+      entityEl.setAttribute('position', data.position);
+      entityEl.setAttribute('rotation', data.rotation);
+      if (entityEl.components.material !== undefined) {
+        entityEl.setAttribute('material', 'color', data.color);
+      }
+      var scene = document.querySelector('a-scene');
+      scene.appendChild(entityEl);
+      self.registerMe(entityEl);
+    }).on('position', function (data) {
+      var entityEl = self.entities[data.id];
+      entityEl.setAttribute('position', data.position);
+    }).on('rotation', function (data) {
+      var entityEl = self.entities[data.id];
+      entityEl.setAttribute('rotation', data.rotation);
+    }).on('despawn', function (data) {
+      console.log("Despawning remote object: ", data.id);
+      var entityEl = self.entities[data.id];
+      self.unregisterMe(entityEl);
+      entityEl.parentNode.removeChild(entityEl);
+    })
+  },
+
+  init: function () {
+    this.entities = {};
+    if (this.data.url == undefined || this.data.url == "") {
+      this.data.url = location.protocol + '//' + location.hostname + ':' + this.data.port + this.data.path;
+    }
+    this.socket = io.connect(this.data.url);
+    this.socket.on('connect', this.onNetworkConnect.bind(this));
+  },
+
+  registerMe: function (el) {
+    this.entities[el.components.network.attrValue.serverId] = el;
+  },
+
+  unregisterMe: function (el) {
+    delete this.entities[el.components.network.attrValue.serverId];
+  },
+
+  emit: function (message, data) {
+    this.socket.emit(message, data);
+  }
+});
+*/
+
+/*
+AFRAME.registerComponent('network', {
+  schema: {
+    local: { type: 'boolean' },
+    serverId: { type: 'string' }
+  },
+  init: function () {
+    if (this.data.local) {
+      this.el.addEventListener('componentchanged', this.onComponentChanged.bind(this));
+    }
+  },
+
+  onComponentChanged: function (evt) {
+    if (evt.detail.name === 'position') {
+      var oldData = this.lastPosition;
+      var newData = evt.detail.newData;
+      if (oldData == undefined || oldData.x !== newData.x || oldData.y !== newData.y || oldData.z !== newData.z) {
+        this.system.emit('position', evt.detail.newData);
+        this.lastPosition = newData;
+      }
+    } else if (evt.detail.name === 'rotation') {
+      var oldData = this.lastRotation;
+      var newData = evt.detail.newData;
+      if (oldData == undefined || oldData.x !== newData.x || oldData.y !== newData.y || oldData.z !== newData.z) {
+        this.system.emit('rotation', evt.detail.newData);
+        this.lastRotation = newData;
+      }
+    }
+  }
+});
+
+*/
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///
+/// State manages all the game state, and obervers can listen to state changes if they wish...
+///
+/// ...also has some helpers to produce 3js and aframe objects consistently in one place from state...
+///
+/// TODO - https://aframe.io/docs/0.7.0/core/systems.html  could do this
+///
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class State {
 
   constructor() {
     this.entities = {};
     this.observers = {};
-    this.url = "http://127.0.0.1:8000";
+    this.url = "http://hook.org:8000";
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -141,25 +260,23 @@ State.instance = function() {
   return State.state;
 };
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-// game map page
-// - also handles nav controls for now - TODO should move to some kind of utility class
-// - this code is a bit of a mess right now - refactor TODO
-//////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+/// game terrain view wrapper page
+/// - also handles nav controls for now - TODO should move to some kind of utility class
+/// - this code is a bit of a mess right now - refactor TODO
+///////////////////////////////////////////////////////////////////////////////////////////////////////
 
 AFRAME.registerComponent('agame-terrain', {
 
+  // TODO is there a way to peek at aterrain?
   schema: {
            lat: {type: 'number', default:  45.557749 },
            lon: {type: 'number', default:  -122.6794 },
-     elevation: {type: 'number', default:  100       },
-        radius: {type: 'number', default:  10        },
+     elevation: {type: 'number', default:  6372798   },
+        radius: {type: 'number', default:  100       },
   },
 
   init: function() {
-
-    // Tell state manager to report any changes to entities here - this does force an initial state message in this case
-    State.instance().observe("entities",results => this.visually_represent_all(results) );
 
     // Game controls for now... inelegant - should be a separate aframe widget TODO
     this.setup_some_game_controls();
@@ -170,6 +287,10 @@ AFRAME.registerComponent('agame-terrain', {
       alert("For now make up a unique name in the url parameters such as http://somewhere?name=" + State.instance().generateUID() );
       return;
     }
+
+this.el.emit("a-terrain:navigate", {lat:this.data.lat, lon: this.data.lon, elevation:this.data.elevation }, false);
+
+    return;
 
     // authenticate that user... with the state engine... now it is magically networked to all other instances too
     let user = State.instance().authenticate({name:name,password:"secret"});
@@ -192,6 +313,10 @@ AFRAME.registerComponent('agame-terrain', {
         this.visually_represent_one(user);
      });
     }
+
+    // Watch for state changes in the database... also in this case it's going to force the server to go and sync state.
+    State.instance().observe("entities",results => this.visually_represent_all(results) );
+
   },
 
 
@@ -235,6 +360,9 @@ AFRAME.registerComponent('agame-terrain', {
     let dragstartlon = 0;
     let dragstartlat = 0;
 
+    let world_radius = TileServer.instance().getRadius();
+    let world_circumference = TileServer.instance().getCircumference();
+
     // allow click drag navigation around the globe
     window.addEventListener("mousedown", e => { dragging = 1; e.preventDefault(); });
     window.addEventListener("mouseup", e => { dragging = 0; e.preventDefault(); });
@@ -249,11 +377,17 @@ AFRAME.registerComponent('agame-terrain', {
       }
       let x = e.clientX - dragstartx;
       let y = e.clientY - dragstarty;
-      // TODO the exact scroll amount can be computed as a function of current distance - not absolutely!
-      // TODO set min max
-      // TODO clipping and wrap around everywhere!!
-      this.data.lon = dragstartlon - x/10;
-      this.data.lat = dragstartlat + y/10;
+
+      // roughly scale movement speed by current distance from surface
+      this.data.lon = dragstartlon - x * this.data.elevation / world_circumference;
+      this.data.lat = dragstartlat + y * this.data.elevation / world_circumference;
+
+      // not critical but tidy up legal orientations
+      if(this.data.lat > 80) this.data.lat = 80;
+      if(this.data.lat < -80) this.data.lat = -80;
+      if(this.data.lon < -180) this.data.lon += 360;
+      if(this.data.lon > 180) this.data.lon -= 360;
+
       // Tell the terrain
       this.el.emit("a-terrain:navigate", {lat:this.data.lat, lon: this.data.lon, elevation:this.data.elevation }, false);
 
@@ -269,16 +403,24 @@ AFRAME.registerComponent('agame-terrain', {
       e.preventDefault();
     });
 
-    // zooming capability
-    window.addEventListener("wheel",function(e) {
-      const deltaY = Math.max(-1, Math.min(1, e.deltaY));
-      // TODO the elevation should be precisely a function of radius! not absolute
-      // TODO the rate of change here should be computed as a function of radius!
-      // TODO set min max
-      // TODO set zoom level appropriately
-      this.data.elevation += deltaY * 5000;
+    // zooming 
+    window.addEventListener("wheel",e => {
+
+      // throw away the speed (which is varys by browser anyway) and just get the direction
+      const direction = Math.max(-1, Math.min(1, e.deltaY));
+
+      // zoom in/out - roughly scaled by current elevation
+      this.data.elevation += this.data.elevation * direction * 0.1;
+
+      // set far limit to the radius of the earth (TODO may want to make 1 = far and 0 = near... rather than hardcoded numbers)
+      if(this.data.elevation > world_circumference/2) this.data.elevation = world_circumference/2;
+
+      // set near limit to 1 meter
       if(this.data.elevation < 1) this.data.elevation = 1;
-      // TODO advertise this
+
+      // tell the terrain engine about this
+      this.el.emit("a-terrain:navigate", {lat:this.data.lat, lon: this.data.lon, elevation:this.data.elevation }, false);
+
       e.preventDefault();
     });
   }
@@ -287,6 +429,7 @@ AFRAME.registerComponent('agame-terrain', {
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 // game user profile page
+// tbd
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
 AFRAME.registerComponent('agame-profile', {

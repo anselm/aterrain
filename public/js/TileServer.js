@@ -1,5 +1,6 @@
 ///
 /// TileServer is intended to be a prototypical elevation tile provider - by default for Cesium tiles
+/// TODO change this to an aframe-system 
 ///
 
 class TileServer  {
@@ -40,25 +41,35 @@ class TileServer  {
     return best;
   }
 
-  elevation2lod(distance) {
-    let osm_earth_radius = 63727982;
-    let osm_earth_circumference = 2*Math.PI*osm_earth_radius;
-    // cannot get closer than the ground
-    if(distance < 1) distance = 1;
-    // no point in getting further away than the distance to see everything
-    if(distance > osm_earth_circumference / 2 ) distance = osm_earth_circumference / 2;
-    // the camera is setup such that if circumference is N then at a distance of N the entire surface is visible on screen.
-    // the visual field of view is a function of level of detail ie: fov=circumference/2^lod
-    // so 2^lod=cir/fov or log(cir/fov)=log(2^lod)
-    //let value = Math.log(osm_earth_circumference*2/distance) / Math.log(2);
-    // hmm... https://gis.stackexchange.com/questions/12991/how-to-calculate-distance-to-ground-of-all-18-osm-zoom-levels/142555#142555
-    let value2 = Math.floor(Math.log(osm_earth_circumference/distance,2));
-    return value2;
+  getRadius() {
+    return 63727982.0;
   }
+
+  getCircumference() {
+    return 400414720.159; // 2*Math.PI*this.getRadius();
+  }
+
+  elevation2lod(d) {
+    let c = this.getCircumference();
+    // truncate reasonable estimations for lod
+    if(d < 1) d = 1;
+    if(d > c/2) d = c/2;
+    // even a small camera fov of 45' would show the entire circumference of the earth at a distance of circumference/2 if the earth was flattened
+    // the visible area is basically distance * 2 ... so  ... number of tiles = circumference / (distance*2)
+    // visible coverage is 2^(lod+1) = number of tiles  or .... 2^(lod+1) = c / (d*2) ... or ... 
+    // also see https://gis.stackexchange.com/questions/12991/how-to-calculate-distance-to-ground-of-all-18-osm-zoom-levels/142555#142555
+    let lod = Math.floor(Math.log2(c/(d*2)))+1;
+    // truncate
+    if(lod < 0) lod = 0;
+    if(lod > 19) lod = 19;
+    return lod;
+  }
+
+  // 2^n = 1
 
   ll2yx(data) {
 
-    // This commented out approach is the more correct way to ask an arbitrary cesium terrain provider - but requires waiting for ready event
+    // This commented out approach is the more correct way get below details from an arbitrary cesium terrain provider - but requires waiting for ready event
     // this.terrainProvider.tilingScheme.getNumberOfXTilesAtLevel(lod) * (180+lon) / 360;
     // this.terrainProvider.tilingScheme.getNumberOfYTilesAtLevel(lod) * ( 90-lat) / 180;
     // let poi = Cesium.Cartographic.fromDegrees(lon,lat);
@@ -71,15 +82,6 @@ class TileServer  {
     let lon = scheme.lon = data.lon;
     let lod = scheme.lod = data.lod;
     let radius = scheme.radius = data.radius;
-
-    let osm_earth_radius = 63727982;
-    let osm_earth_circumference = 2*Math.PI*osm_earth_radius;
-
-    // get the meters width size of the tile (this is vaguely helpful for scaling buildings but not really helpful for anything)
-    // note that this meters_wide is problematic - really isn't that useful generally speaking; it is best for flat maps only
-    // note that https://wiki.openstreetmap.org/wiki/Zoom_levels has a design flaw where they use +8 because their tiles are 256 pixels wide.
-    // (there's no reason to have the resolution of a tile have anything to do with estimation of meters width of a tile in the real world)
-    scheme.meters_wide = ( osm_earth_circumference * Math.cos(data.lat * Math.PI / 180) / Math.pow(2,data.lod) / 2 );
 
     // get number of tiles wide and tall - hardcoded to cesium terrain tiles TMS format
     scheme.w = Math.pow(2,lod+1);
@@ -115,10 +117,13 @@ class TileServer  {
     scheme.degrees_lon = 360 / scheme.w; 
     scheme.degrees_lat = 180 / scheme.h;
 
-    // building url if any
-//    scheme.building_url = "tiles3d/"+scheme.lod+"/"+scheme.xtile+"/"+(32767-scheme.ytile)+".gltf";
-
+    // TODO make this a parameter
     scheme.building_url = "https://s3.amazonaws.com/cesium-dev/Mozilla/SanFranciscoGltf15Gz/"+scheme.lod+"/"+scheme.xtile+"/"+scheme.ytile+".gltf";
+
+    // convenience values
+    scheme.width_world = this.getCircumference();
+    scheme.width_tile_flat = scheme.width_world / scheme.w;
+    scheme.width_tile_lat = scheme.width_tile_flat * Math.cos(data.lat * Math.PI / 180);
 
     return scheme;
   }
@@ -136,12 +141,12 @@ class TileServer  {
   toGeometry(scheme) {
     let tile = scheme.tile;
     let geometry = new THREE.Geometry();
+    let earth_radius = this.getRadius();
     // terrain to vertices on globe
     for (let i=0; i<tile._uValues.length; i++) {
       let lonrad = (tile._uValues[i]/32767*scheme.degrees_lonrad + scheme.rect.west);
       let latrad = (tile._vValues[i]/32767*scheme.degrees_latrad + scheme.rect.south);
       let elevation = (((tile._heightValues[i]*(tile._maximumHeight-tile._minimumHeight))/32767.0)+tile._minimumHeight);
-      let earth_radius = 6372798.2;
       let v = this.ll2v(latrad,lonrad,(earth_radius+elevation)*scheme.radius/earth_radius);
       geometry.vertices.push(v);
     }
@@ -184,3 +189,30 @@ class TileServer  {
   }
 }
 
+
+///
+/// Connect to Cesium image and terrain providers right now.
+/// TODO ideally this would not be static
+///
+
+Cesium.imageProvider = new Cesium.BingMapsImageryProvider({
+  url : 'https://dev.virtualearth.net',
+  key : 'RsYNpiMKfN7KuwZrt8ur~ylV3-qaXdDWiVc2F5NCoFA~AkXwps2-UcRkk2L60K5qBy5kPnTmwvxdfwl532NTheLdFfvYlVJbLnNWG1iC-RGL',
+  mapStyle : Cesium.BingMapsStyle.AERIAL
+});
+
+Cesium.terrainProvider = new Cesium.CesiumTerrainProvider({
+  requestVertexNormals : true, 
+  url:"https://assets.agi.com/stk-terrain/v1/tilesets/world/tiles",
+});
+
+///
+/// Singelton convenience handle on TileServer
+/// TODO an AFrame System could do this https://aframe.io/docs/0.7.0/core/systems.html
+///
+
+TileServer.instance = function() {
+  if(TileServer.tileServer) return TileServer.tileServer;
+  TileServer.tileServer = new TileServer(Cesium.terrainProvider, Cesium.imageProvider);
+  return TileServer.tileServer;
+};

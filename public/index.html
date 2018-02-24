@@ -18,9 +18,12 @@ body { background:#f0e0e0; overflow:hidden;}
 <a-scene cursor="rayOrigin: mouse">
 
   <!-- scene graph fragment for main game -->
-  <a-entity id="agame-main" visible="true" a-terrain="lat:45.557749; lon:-122.6794; lod:3; radius:10; elevation:100" agame-terrain="">
+  <a-entity id="agame-main" visible="true"
+                a-terrain="lat:45.557749; lon:-122.6794; lod:3; radius:1000; elevation:263727982"
+            agame-terrain="lat:45.557749; lon:-122.6794; lod:3; radius:1000; elevation:263727982"
+            >
 
-    <a-sphere radius=10 wireframe=1></a-sphere>
+    <a-sphere radius=1050 wireframe=1 segments-height=18 segments-width=36></a-sphere>
 
     <!--
     <a-entity a-ll="lat:45.557749; lon:-122.6794; radius:10;">
@@ -82,7 +85,7 @@ body { background:#f0e0e0; overflow:hidden;}
   </a-entity>
 
   <!-- camera -->
-  <a-entity id="camera" camera="fov:45" mouse-cursor position="0 0 11"></a-entity>
+  <a-entity id="camera" camera="fov:45" mouse-cursor position="0 0 0"></a-entity>
 
 </a-scene>
 
