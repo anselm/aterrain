@@ -222,37 +222,41 @@ class TileServer  {
   }
 
 
-  toGeometry2(scheme) {
+  toGeometry(scheme) {
 
     let geometry = new THREE.Geometry();
-    let xs = 64;
-    let ys = 64;
+    let xs = 16;
+    let ys = 16;
     let scale = 256;
     // build vertices (for a given x,y point calculate the longitude and latitude of that point)
     for(let y = 0; y <= scale; y+=ys) {
-      console.log("---------");
+    //  console.log("---------");
       for(let x = 0; x <= scale; x+=xs) {
         let lonrad = scheme.degrees_lonrad * x / scale + scheme.rect.west;
         let latrad = scheme.rect.north - scheme.degrees_latrad * y / scale;
         let latrad2 = scheme.degrees_latrad * y / scale + scheme.rect.south;
 
+latrad2 = latrad;
 // ordinary lat
 let lat = pi2lat(latrad);
+let lat2 = linearToGudermannian(lat);
 let yval = convertRange(GudermannianInv(lat),[Math.PI,-Math.PI],[0,256]);
 let lat3 = Gudermannian( convertRange( yval,  [0, 256],  [Math.PI, -Math.PI] ));
-console.log("latrad="+latrad+" lat="+lat + "  y=" + GudermannianInv(lat) + " y="+gudermannianToLinear(lat) );
-console.log(linearToGudermannian(  y/256*Math.PI*2-Math.PI ));
+//console.log("latrad="+latrad+" lat="+lat + "  y=" + GudermannianInv(lat) + " y="+gudermannianToLinear(lat) );
+//console.log("lat="+lat2pi(lat)+" lat2="+lat2pi(lat2)+" latrad2="+latrad2);
+latrad2 = lat2pi(lat2);
 
         let radius = scheme.radius;
         let v = this.ll2v(latrad2,lonrad,radius);
+      //  console.log(v);
         geometry.vertices.push(v);
       }
     }
     // connect the dots
     for(let y = 0, v =0; y < scale; y+=ys) {
       for(let x = 0; x < scale; x+=xs) {
-        geometry.faces.push(new THREE.Face3(v,v+1,v+scale/xs+1));
-        geometry.faces.push(new THREE.Face3(v+1,v+scale/xs+1+1,v+scale/xs+1));
+        geometry.faces.push(new THREE.Face3(v+1,v,v+scale/xs+1));
+        geometry.faces.push(new THREE.Face3(v+1,v+scale/xs+1,v+scale/xs+1+1));
         v++;
       }
       v++;
@@ -265,8 +269,10 @@ console.log(linearToGudermannian(  y/256*Math.PI*2-Math.PI ));
         let vya = y/scale;
         let vxb = (x+xs)/scale;
         let vyb = (y+ys)/scale;
-        geometry.faceVertexUvs[0].push([ new THREE.Vector2(vxa,vya), new THREE.Vector2(vxb,vya), new THREE.Vector2(vxa,vyb) ]);
-        geometry.faceVertexUvs[0].push([ new THREE.Vector2(vxb,vya), new THREE.Vector2(vxb,vyb), new THREE.Vector2(vxa,vyb) ]);
+        vya = 1-vya;
+        vyb = 1-vyb;
+        geometry.faceVertexUvs[0].push([ new THREE.Vector2(vxb,vya), new THREE.Vector2(vxa,vya), new THREE.Vector2(vxa,vyb) ]);
+        geometry.faceVertexUvs[0].push([ new THREE.Vector2(vxb,vya), new THREE.Vector2(vxa,vyb), new THREE.Vector2(vxb,vyb) ]);
       }
     }
     geometry.uvsNeedUpdate = true;
@@ -275,7 +281,7 @@ console.log(linearToGudermannian(  y/256*Math.PI*2-Math.PI ));
     return geometry;
   }
 
-  toGeometry(scheme) {
+  toGeometry2(scheme) {
     let tile = scheme.tile;
     let geometry = new THREE.Geometry();
     let earth_radius = this.getRadius();
