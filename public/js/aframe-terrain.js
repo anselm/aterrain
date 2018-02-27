@@ -187,6 +187,7 @@ AFRAME.registerComponent('a-terrain', {
         while(scratch.lat > 90) scratch.lat -= 180;
         // make tile
         this.updateTile(scratch);
+//        return;
       }
     }
 

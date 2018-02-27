@@ -3,6 +3,91 @@
 /// TODO change this to an aframe-system 
 ///
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+// math
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// https://en.wikipedia.org/wiki/Gudermannian_function
+// http://aperturetiles.com/docs/development/api/jsdocs/binning_WebMercatorTilePyramid.js.html
+// https://stackoverflow.com/questions/1166059/how-can-i-get-latitude-longitude-from-x-y-on-a-mercator-map-jpeg
+
+var EPSG_900913_SCALE_FACTOR = 20037508.342789244,
+      EPSG_900913_LATITUDE = 85.05112878,
+      DEGREES_TO_RADIANS = Math.PI / 180.0, // Factor for changing degrees to radians
+      RADIANS_TO_DEGREES = 180.0 / Math.PI; // Factor for changing radians to degrees
+
+function rootToTileMercator( lon, lat, level ) {
+  var latR = lat * DEGREES_TO_RADIANS,
+      pow2 = 1 << level,
+      x = (lon + 180.0) / 360.0 * pow2,
+      y = (pow2 * (1 - Math.log(Math.tan(latR) + 1 / Math.cos(latR)) / Math.PI) / 2);
+  return {
+          x: x,
+          y: pow2 - y
+      };
+}
+
+function sinh( arg ) {
+    return (Math.exp(arg) - Math.exp(-arg)) / 2.0;
+}
+
+function tileToLon( x, level ) {
+  var pow2 = 1 << level;
+  return x / pow2 * 360.0 - 180.0;
+}
+
+function tileToLat( y, level ) {
+  var pow2 = 1 << level,
+      n    = -Math.PI + (2.0 * Math.PI * y) / pow2;
+  return Math.atan(sinh(n)) * RADIANS_TO_DEGREES;
+}
+
+function linearToGudermannian( value ) {
+  function gudermannian( y ) {
+    // converts a y value from -PI(bottom) to PI(top) into the
+    // mercator projection latitude
+    return Math.atan(sinh(y)) * RADIANS_TO_DEGREES;
+  }
+  return gudermannian( (value / EPSG_900913_LATITUDE) * Math.PI );
+}
+
+function gudermannianToLinear(value) {
+  function gudermannianInv( latitude ) {
+    // converts a latitude value from -EPSG_900913_LATITUDE to EPSG_900913_LATITUDE into
+    // a y value from -PI(bottom) to PI(top)
+    var sign = ( latitude !== 0 ) ? latitude / Math.abs(latitude) : 0,
+        sin = Math.sin(latitude * DEGREES_TO_RADIANS * sign);
+    return sign * (Math.log((1.0 + sin) / (1.0 - sin)) / 2.0);
+  }
+  return (gudermannianInv( value ) / Math.PI) * EPSG_900913_LATITUDE;
+}
+
+let Gudermannian = function(y) {
+    return Math.atan(Math.sinh(y)) * (180 / Math.PI)
+}
+
+let GudermannianInv = function(latitude) {
+    var sign = Math.sign(latitude);
+    var sin  = Math.sin(latitude * (Math.PI / 180) * sign );
+    return sign * ( Math.log( (1 + sin) / (1 - sin) ) / 2 );
+}
+
+let convertRange = function( value, r1, r2 ) { return ( value - r1[0] ) * ( r2[1] - r2[0] ) / ( r1[1] - r1[0] )  +   r2[0];  }
+
+let pi2lat = function(v) {
+  return (v*180/Math.PI);
+}
+
+let lat2pi = function(v) {
+  return v*Math.PI/180;
+}
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+// tile server
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 class TileServer  {
  
   constructor(terrainProvider,imageProvider) {
@@ -58,14 +143,12 @@ class TileServer  {
     // the visible area is basically distance * 2 ... so  ... number of tiles = circumference / (distance*2)
     // visible coverage is 2^(lod+1) = number of tiles  or .... 2^(lod+1) = c / (d*2) ... or ... 
     // also see https://gis.stackexchange.com/questions/12991/how-to-calculate-distance-to-ground-of-all-18-osm-zoom-levels/142555#142555
-    let lod = Math.floor(Math.log2(c/(d*2)))+1;
+    let lod = Math.floor(Math.log2(c/(d*2))) +1;
     // truncate
     if(lod < 0) lod = 0;
     if(lod > 19) lod = 19;
     return lod;
   }
-
-  // 2^n = 1
 
   ll2yx(data) {
 
@@ -138,14 +221,68 @@ class TileServer  {
     return new THREE.Vector3(x,y,z);
   }
 
+
+  toGeometry2(scheme) {
+
+    let geometry = new THREE.Geometry();
+    let xs = 64;
+    let ys = 64;
+    let scale = 256;
+    // build vertices (for a given x,y point calculate the longitude and latitude of that point)
+    for(let y = 0; y <= scale; y+=ys) {
+      console.log("---------");
+      for(let x = 0; x <= scale; x+=xs) {
+        let lonrad = scheme.degrees_lonrad * x / scale + scheme.rect.west;
+        let latrad = scheme.rect.north - scheme.degrees_latrad * y / scale;
+        let latrad2 = scheme.degrees_latrad * y / scale + scheme.rect.south;
+
+// ordinary lat
+let lat = pi2lat(latrad);
+let yval = convertRange(GudermannianInv(lat),[Math.PI,-Math.PI],[0,256]);
+let lat3 = Gudermannian( convertRange( yval,  [0, 256],  [Math.PI, -Math.PI] ));
+console.log("latrad="+latrad+" lat="+lat + "  y=" + GudermannianInv(lat) + " y="+gudermannianToLinear(lat) );
+console.log(linearToGudermannian(  y/256*Math.PI*2-Math.PI ));
+
+        let radius = scheme.radius;
+        let v = this.ll2v(latrad2,lonrad,radius);
+        geometry.vertices.push(v);
+      }
+    }
+    // connect the dots
+    for(let y = 0, v =0; y < scale; y+=ys) {
+      for(let x = 0; x < scale; x+=xs) {
+        geometry.faces.push(new THREE.Face3(v,v+1,v+scale/xs+1));
+        geometry.faces.push(new THREE.Face3(v+1,v+scale/xs+1+1,v+scale/xs+1));
+        v++;
+      }
+      v++;
+    }
+    // uvs
+    geometry.faceVertexUvs[0] = [];
+    for(let y = 0, v = 0; y < scale; y+=ys) {
+      for(let x = 0; x < scale; x+=xs) {
+        let vxa = x/scale;
+        let vya = y/scale;
+        let vxb = (x+xs)/scale;
+        let vyb = (y+ys)/scale;
+        geometry.faceVertexUvs[0].push([ new THREE.Vector2(vxa,vya), new THREE.Vector2(vxb,vya), new THREE.Vector2(vxa,vyb) ]);
+        geometry.faceVertexUvs[0].push([ new THREE.Vector2(vxb,vya), new THREE.Vector2(vxb,vyb), new THREE.Vector2(vxa,vyb) ]);
+      }
+    }
+    geometry.uvsNeedUpdate = true;
+    // face normals
+    geometry.computeFaceNormals();
+    return geometry;
+  }
+
   toGeometry(scheme) {
     let tile = scheme.tile;
     let geometry = new THREE.Geometry();
     let earth_radius = this.getRadius();
     // terrain to vertices on globe
     for (let i=0; i<tile._uValues.length; i++) {
-      let lonrad = (tile._uValues[i]/32767*scheme.degrees_lonrad + scheme.rect.west);
-      let latrad = (tile._vValues[i]/32767*scheme.degrees_latrad + scheme.rect.south);
+      let lonrad = tile._uValues[i]/32767*scheme.degrees_lonrad + scheme.rect.west;
+      let latrad = tile._vValues[i]/32767*scheme.degrees_latrad + scheme.rect.south;
       let elevation = (((tile._heightValues[i]*(tile._maximumHeight-tile._minimumHeight))/32767.0)+tile._minimumHeight);
       let v = this.ll2v(latrad,lonrad,(earth_radius+elevation)*scheme.radius/earth_radius);
       geometry.vertices.push(v);
@@ -154,8 +291,6 @@ class TileServer  {
     for (let i=0; i<tile._indices.length-1; i=i+3) {
       geometry.faces.push(new THREE.Face3(tile._indices[i], tile._indices[i+1], tile._indices[i+2]));
     }
-    // face normals
-    geometry.computeFaceNormals();
     // face vertices to linear distribution uv map
     let faces = geometry.faces;
     geometry.faceVertexUvs[0] = [];
@@ -169,6 +304,8 @@ class TileServer  {
       geometry.faceVertexUvs[0].push([ new THREE.Vector2(vxa,vya), new THREE.Vector2(vxb,vyb), new THREE.Vector2(vxc,vyc) ]);
     }
     geometry.uvsNeedUpdate = true;
+    // face normals
+    geometry.computeFaceNormals();
     return geometry;
   }
 
