@@ -98,7 +98,7 @@ class TileServer  {
     // the visible area is basically distance * 2 ... so  ... number of tiles = circumference / (distance*2)
     // visible coverage is 2^(lod+1) = number of tiles  or .... 2^(lod+1) = c / (d*2) ... or ... 
     // also see https://gis.stackexchange.com/questions/12991/how-to-calculate-distance-to-ground-of-all-18-osm-zoom-levels/142555#142555
-    let lod = Math.floor(Math.log2(c/(d*2))) +1;
+    let lod = Math.floor(Math.log2(c/(d*2)));
     // truncate
     if(lod < 0) lod = 0;
     if(lod > 19) lod = 19;
