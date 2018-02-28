@@ -11,78 +11,33 @@
 // http://aperturetiles.com/docs/development/api/jsdocs/binning_WebMercatorTilePyramid.js.html
 // https://stackoverflow.com/questions/1166059/how-can-i-get-latitude-longitude-from-x-y-on-a-mercator-map-jpeg
 
-var EPSG_900913_SCALE_FACTOR = 20037508.342789244,
-      EPSG_900913_LATITUDE = 85.05112878,
-      DEGREES_TO_RADIANS = Math.PI / 180.0, // Factor for changing degrees to radians
-      RADIANS_TO_DEGREES = 180.0 / Math.PI; // Factor for changing radians to degrees
+var EPSG_900913_SCALE_FACTOR = 20037508.342789244;
+var EPSG_900913_LATITUDE = 85.05112878;
+var DEGREES_TO_RADIANS = Math.PI / 180.0; // Factor for changing degrees to radians
+var RADIANS_TO_DEGREES = 180.0 / Math.PI; // Factor for changing radians to degrees
 
-function rootToTileMercator( lon, lat, level ) {
-  var latR = lat * DEGREES_TO_RADIANS,
-      pow2 = 1 << level,
-      x = (lon + 180.0) / 360.0 * pow2,
-      y = (pow2 * (1 - Math.log(Math.tan(latR) + 1 / Math.cos(latR)) / Math.PI) / 2);
-  return {
-          x: x,
-          y: pow2 - y
-      };
-}
+let pi2deg = function(v) { return v*RADIANS_TO_DEGREES; }
+let deg2pi = function(v) { return v*DEGREES_TO_RADIANS; }
 
 function sinh( arg ) {
-    return (Math.exp(arg) - Math.exp(-arg)) / 2.0;
+  return (Math.exp(arg) - Math.exp(-arg)) / 2.0;
 }
 
-function tileToLon( x, level ) {
-  var pow2 = 1 << level;
-  return x / pow2 * 360.0 - 180.0;
+function gudermannian( y ) {
+  // converts a y value from -PI(bottom) to PI(top) into the mercator projection latitude
+  return Math.atan(sinh(y)) * RADIANS_TO_DEGREES;
 }
 
-function tileToLat( y, level ) {
-  var pow2 = 1 << level,
-      n    = -Math.PI + (2.0 * Math.PI * y) / pow2;
-  return Math.atan(sinh(n)) * RADIANS_TO_DEGREES;
-}
-
-function linearToGudermannian( value ) {
-  function gudermannian( y ) {
-    // converts a y value from -PI(bottom) to PI(top) into the
-    // mercator projection latitude
-    return Math.atan(sinh(y)) * RADIANS_TO_DEGREES;
-  }
-  return gudermannian( (value / EPSG_900913_LATITUDE) * Math.PI );
+function gudermannianInv( latitude ) {
+  // converts a latitude value from -EPSG_900913_LATITUDE to EPSG_900913_LATITUDE into a y value from -PI(bottom) to PI(top)
+  let sign = ( latitude !== 0 ) ? latitude / Math.abs(latitude) : 0;
+  let sin = Math.sin(latitude * DEGREES_TO_RADIANS * sign);
+  return sign * (Math.log((1.0 + sin) / (1.0 - sin)) / 2.0);
 }
 
 function gudermannianToLinear(value) {
-  function gudermannianInv( latitude ) {
-    // converts a latitude value from -EPSG_900913_LATITUDE to EPSG_900913_LATITUDE into
-    // a y value from -PI(bottom) to PI(top)
-    var sign = ( latitude !== 0 ) ? latitude / Math.abs(latitude) : 0,
-        sin = Math.sin(latitude * DEGREES_TO_RADIANS * sign);
-    return sign * (Math.log((1.0 + sin) / (1.0 - sin)) / 2.0);
-  }
   return (gudermannianInv( value ) / Math.PI) * EPSG_900913_LATITUDE;
 }
-
-let Gudermannian = function(y) {
-    return Math.atan(Math.sinh(y)) * (180 / Math.PI)
-}
-
-let GudermannianInv = function(latitude) {
-    var sign = Math.sign(latitude);
-    var sin  = Math.sin(latitude * (Math.PI / 180) * sign );
-    return sign * ( Math.log( (1 + sin) / (1 - sin) ) / 2 );
-}
-
-let convertRange = function( value, r1, r2 ) { return ( value - r1[0] ) * ( r2[1] - r2[0] ) / ( r1[1] - r1[0] )  +   r2[0];  }
-
-let pi2lat = function(v) {
-  return (v*180/Math.PI);
-}
-
-let lat2pi = function(v) {
-  return v*Math.PI/180;
-}
-
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 // tile server
@@ -221,33 +176,82 @@ class TileServer  {
     return new THREE.Vector3(x,y,z);
   }
 
+  toGeometryEmulatingCesium(scene) {
 
-  toGeometry(scheme) {
-
+    // prepare to build a portion of the hull of the surface of the planet - this will be a curved mesh of x by y resolution (see below)
     let geometry = new THREE.Geometry();
-    let xs = 16;
-    let ys = 16;
-    let scale = 256;
-    // build vertices (for a given x,y point calculate the longitude and latitude of that point)
-    for(let y = 0; y <= scale; y+=ys) {
-    //  console.log("---------");
-      for(let x = 0; x <= scale; x+=xs) {
-        let lonrad = scheme.degrees_lonrad * x / scale + scheme.rect.west;
-        let latrad = scheme.rect.north - scheme.degrees_latrad * y / scale;
-        let latrad2 = scheme.degrees_latrad * y / scale + scheme.rect.south;
 
-latrad2 = latrad;
-// ordinary lat
-let lat = pi2lat(latrad);
-let lat2 = linearToGudermannian(lat);
-let yval = convertRange(GudermannianInv(lat),[Math.PI,-Math.PI],[0,256]);
-let lat3 = Gudermannian( convertRange( yval,  [0, 256],  [Math.PI, -Math.PI] ));
-//console.log("latrad="+latrad+" lat="+lat + "  y=" + GudermannianInv(lat) + " y="+gudermannianToLinear(lat) );
-//console.log("lat="+lat2pi(lat)+" lat2="+lat2pi(lat2)+" latrad2="+latrad2);
-latrad2 = lat2pi(lat2);
+    // scale is arbitrary
+    let scale = 256;
+
+    // stride across the hull at this x resolution
+    let xs = 16;
+
+    // stride across the hull at this y resolution
+    let ys = 16;
+
+    // here is the code from https://github.com/AnalyticalGraphicsInc/cesium/blob/master/Source/Scene/ImageryLayer.js#L1026
+    // just wanted to see what the fractional values were over some extent
+
+    var sinLatitude = Math.sin(scheme.rect.south);
+    var southMercatorY = 0.5 * Math.log((1 + sinLatitude) / (1 - sinLatitude));
+
+     sinLatitude = Math.sin(scheme.rect.north);
+    var northMercatorY = 0.5 * Math.log((1 + sinLatitude) / (1 - sinLatitude));
+     console.log(sinLatitude);
+        console.log(northMercatorY);
+    var oneOverMercatorHeight = 1.0 / (northMercatorY - southMercatorY);
+
+    // build vertices (for a given x,y point on the hull calculate the longitude and latitude of that point)
+    for(let y = 0; y <= scale; y+=ys) {
+     // for(let x = 0; x <= scale; x+=xs) {
+        let fraction = y / 255;
+        let latitude = (scheme.rect.south-scheme.rect.north) * fraction;
+         sinLatitude = Math.sin(latitude);
+        let mercatorY = 0.5 * Math.log((1.0 + sinLatitude) / (1.0 - sinLatitude));
+        let mercatorFraction = (mercatorY - southMercatorY) * oneOverMercatorHeight;
+        console.log("lat = "+latitude+" sinlat="+sinLatitude+" mercfract=" + mercatorFraction);
+      //}
+    }
+
+  }
+
+  toGeometryIdealizedWithGudermanian(scheme) {
+
+// Attempt #1 - move the actual vertices using the gudermannian function. The latitude input is a linear position along the tile.
+// This fails when zooming due to a scale issue.
+// Also in any case north and south vertex extents should be constant
+
+
+    // prepare to build a portion of the hull of the surface of the planet - this will be a curved mesh of x by y resolution (see below)
+    let geometry = new THREE.Geometry();
+
+    // scale is arbitrary
+    let scale = 256;
+
+    // stride across the hull at this x resolution
+    let xs = 16;
+
+    // stride across the hull at this y resolution
+    let ys = 16;
+
+    // build vertices (for a given x,y point on the hull calculate the longitude and latitude of that point)
+    for(let y = 0; y <= scale; y+=ys) {
+      for(let x = 0; x <= scale; x+=xs) {
+
+        // x position for vertex within hull
+        let lonrad = scheme.degrees_lonrad * x / scale + scheme.rect.west;
+
+        // y position for vertex within hull
+        let latrad = scheme.rect.north - scheme.degrees_latrad * y / scale;
+
+// Attempt #1 Here is my attempt to take the idealized surface and distort the vertices to produce the right visual appearance for image draping
+let arg = latrad*2;
+let e = (Math.exp(arg) - Math.exp(-arg)) / 2.0;
+latrad = Math.atan(e);  // http://mathworld.wolfram.com/InverseTangent.html
 
         let radius = scheme.radius;
-        let v = this.ll2v(latrad2,lonrad,radius);
+        let v = this.ll2v(latrad,lonrad,radius);
       //  console.log(v);
         geometry.vertices.push(v);
       }
@@ -281,15 +285,23 @@ latrad2 = lat2pi(lat2);
     return geometry;
   }
 
-  toGeometry2(scheme) {
+  toGeometry(scheme) {
     let tile = scheme.tile;
     let geometry = new THREE.Geometry();
     let earth_radius = this.getRadius();
-    // terrain to vertices on globe
+    // build vertices on the surface of a globe given a linear latitude and longitude series of stepped values -> makes evenly distributed spherically points
     for (let i=0; i<tile._uValues.length; i++) {
       let lonrad = tile._uValues[i]/32767*scheme.degrees_lonrad + scheme.rect.west;
       let latrad = tile._vValues[i]/32767*scheme.degrees_latrad + scheme.rect.south;
       let elevation = (((tile._heightValues[i]*(tile._maximumHeight-tile._minimumHeight))/32767.0)+tile._minimumHeight);
+
+      if(true) {
+        // This test fails at LOD > 0 due to bad distortion. I'm definitely failing to scale some ratio here.
+        // Gudermannian distortion in vector space as a test
+        let e = (Math.exp(latrad*2) - Math.exp(-latrad*2)) / 2.0;
+        latrad = Math.atan(e);  // http://mathworld.wolfram.com/InverseTangent.html
+      }
+
       let v = this.ll2v(latrad,lonrad,(earth_radius+elevation)*scheme.radius/earth_radius);
       geometry.vertices.push(v);
     }
@@ -298,6 +310,7 @@ latrad2 = lat2pi(lat2);
       geometry.faces.push(new THREE.Face3(tile._indices[i], tile._indices[i+1], tile._indices[i+2]));
     }
     // face vertices to linear distribution uv map
+    // TODO this definitely must consider gudermannian mercator projection
     let faces = geometry.faces;
     geometry.faceVertexUvs[0] = [];
     for (let i = 0; i < faces.length ; i++) {
