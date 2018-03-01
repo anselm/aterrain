@@ -73,16 +73,19 @@ AFRAME.registerComponent('a-tile', {
   init: function () {
     let scope = this;
     let data = scope.data;
-    TileServer.instance().tile(data,function(scheme) {
-      scope.el.setObject3D('mesh',scheme.mesh);
-      // estimate an elevation for this tile - actually this may not be the center of the tile depending on how it was created TODO
-      // TODO probably shouldn't do this at all - is it needed?
-      scheme.elevation = TileServer.instance().findClosestElevation(scheme);
-return;
-      let building = document.createElement('a-entity');
-      // TODO shouldn't the radius be the elevation?
-      building.setAttribute('a-building',{ lat:data.lat, lon:data.lon, lod:15, radius:data.radius });
-      scope.el.appendChild(building);
+    TileServer.instance().ready( unused => {
+      TileServer.instance().produceTile(data,scheme => {
+        scope.el.setObject3D('mesh',scheme.mesh);
+        // estimate an elevation for this tile - actually this may not be the center of the tile depending on how it was created TODO
+        // TODO probably shouldn't do this at all - is it needed?
+        scheme.elevation = TileServer.instance().findClosestElevation(scheme);
+        // TODO it would be nice to know better if there were buildings without triggering an error
+        if(scheme.lod < 15) return;
+        let building = document.createElement('a-entity');
+        // TODO shouldn't the radius be the elevation?
+        building.setAttribute('a-building',{ lat:data.lat, lon:data.lon, lod:15, radius:data.radius });
+        scope.el.appendChild(building);
+      });
     });
   }
 });

@@ -1,10 +1,8 @@
-///
-/// TileServer is intended to be a prototypical elevation tile provider - by default for Cesium tiles
-/// TODO change this to an aframe-system 
-///
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
-// math
+// math helpers
+// TODO perhaps put this somewhere cleaner later
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // https://en.wikipedia.org/wiki/Gudermannian_function
@@ -39,20 +37,29 @@ function gudermannianToLinear(value) {
   return (gudermannianInv( value ) / Math.PI) * EPSG_900913_LATITUDE;
 }
 
+function gudermannian_radians(arg) {
+  return Math.atan(sinh(arg*2));
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
-// tile server
+///
+/// TileServer is intended to be a prototypical elevation tile provider - by default for Cesium tiles
+/// TODO change this to an aframe-system
+///
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class TileServer  {
  
-  constructor(terrainProvider,imageProvider) {
+  constructor(terrainProvider,imageProvider,guder) {
     this.terrainProvider = terrainProvider;
-    this.imageServer = new ImageServer(terrainProvider, imageProvider);
+    this.imageProvider = imageProvider;
+    this.guder = guder ? 1 : 0;
   }
 
   ready(callback) {
     Cesium.when(this.terrainProvider.readyPromise).then( unused => {
-      this.imageServer.ready(callback);
+      ImageServer.instance().ready(callback);
     });
   }
 
@@ -178,6 +185,8 @@ class TileServer  {
 
   toGeometryEmulatingCesium(scene) {
 
+    // some test code to look at how cesium was building the Gudermannian 
+
     // prepare to build a portion of the hull of the surface of the planet - this will be a curved mesh of x by y resolution (see below)
     let geometry = new THREE.Geometry();
 
@@ -196,10 +205,8 @@ class TileServer  {
     var sinLatitude = Math.sin(scheme.rect.south);
     var southMercatorY = 0.5 * Math.log((1 + sinLatitude) / (1 - sinLatitude));
 
-     sinLatitude = Math.sin(scheme.rect.north);
+    sinLatitude = Math.sin(scheme.rect.north);
     var northMercatorY = 0.5 * Math.log((1 + sinLatitude) / (1 - sinLatitude));
-     console.log(sinLatitude);
-        console.log(northMercatorY);
     var oneOverMercatorHeight = 1.0 / (northMercatorY - southMercatorY);
 
     // build vertices (for a given x,y point on the hull calculate the longitude and latitude of that point)
@@ -216,12 +223,7 @@ class TileServer  {
 
   }
 
-  toGeometryIdealizedWithGudermanian(scheme) {
-
-// Attempt #1 - move the actual vertices using the gudermannian function. The latitude input is a linear position along the tile.
-// This fails when zooming due to a scale issue.
-// Also in any case north and south vertex extents should be constant
-
+  toGeometryIdealized(scheme) {
 
     // prepare to build a portion of the hull of the surface of the planet - this will be a curved mesh of x by y resolution (see below)
     let geometry = new THREE.Geometry();
@@ -245,10 +247,12 @@ class TileServer  {
         // y position for vertex within hull
         let latrad = scheme.rect.north - scheme.degrees_latrad * y / scale;
 
-// Attempt #1 Here is my attempt to take the idealized surface and distort the vertices to produce the right visual appearance for image draping
-let arg = latrad*2;
-let e = (Math.exp(arg) - Math.exp(-arg)) / 2.0;
-latrad = Math.atan(e);  // http://mathworld.wolfram.com/InverseTangent.html
+        if(this.guder) {
+          // Here is my attempt to take the idealized surface and distort the vertices to produce the right visual appearance for image draping
+          let arg = latrad*2;
+          let e = (Math.exp(arg) - Math.exp(-arg)) / 2.0;
+          latrad = Math.atan(e);  // http://mathworld.wolfram.com/InverseTangent.html
+        }
 
         let radius = scheme.radius;
         let v = this.ll2v(latrad,lonrad,radius);
@@ -295,12 +299,8 @@ latrad = Math.atan(e);  // http://mathworld.wolfram.com/InverseTangent.html
       let latrad = tile._vValues[i]/32767*scheme.degrees_latrad + scheme.rect.south;
       let elevation = (((tile._heightValues[i]*(tile._maximumHeight-tile._minimumHeight))/32767.0)+tile._minimumHeight);
 
-      if(true) {
-        // This test fails at LOD > 0 due to bad distortion. I'm definitely failing to scale some ratio here.
-        // Gudermannian distortion in vector space as a test
-        let e = (Math.exp(latrad*2) - Math.exp(-latrad*2)) / 2.0;
-        latrad = Math.atan(e);  // http://mathworld.wolfram.com/InverseTangent.html
-      }
+      // TODO fix mercator distortion in vertex space for now - unsure if we want to leave this here
+      if(this.guder) { latrad = gudermannian_radians(latrad); }
 
       let v = this.ll2v(latrad,lonrad,(earth_radius+elevation)*scheme.radius/earth_radius);
       geometry.vertices.push(v);
@@ -328,47 +328,32 @@ latrad = Math.atan(e);  // http://mathworld.wolfram.com/InverseTangent.html
     return geometry;
   }
 
-  tile(data,callback) {
-    let scope = this;
-    scope.ready( function(){
-      let scheme = scope.ll2yx(data);
-      scope.imageServer.toMaterial(scheme,function(material) {
-        scheme.material = material;
-        Cesium.when(scope.terrainProvider.requestTileGeometry(scheme.xtile,scheme.ytile,scheme.lod),function(tile) {
-          scheme.tile = tile;
-          scheme.geometry = scope.toGeometry(scheme);
-          scheme.mesh = new THREE.Mesh(scheme.geometry,scheme.material);
-          callback(scheme);
-        });
+  produceTile(data,callback) {
+    let scheme = this.ll2yx(data);
+    this.imageProvider.provideImage(scheme, material => {
+      scheme.material = material;
+      Cesium.when(this.terrainProvider.requestTileGeometry(scheme.xtile,scheme.ytile,scheme.lod),tile => {
+        scheme.tile = tile;
+        scheme.geometry = this.toGeometry(scheme); // this.toGeometryIdealized(scheme);
+        scheme.mesh = new THREE.Mesh(scheme.geometry,scheme.material);
+        callback(scheme);
       });
     });
   }
 }
 
-
 ///
-/// Connect to Cesium image and terrain providers right now.
-/// TODO ideally this would not be static
-///
-
-Cesium.imageProvider = new Cesium.BingMapsImageryProvider({
-  url : 'https://dev.virtualearth.net',
-  key : 'RsYNpiMKfN7KuwZrt8ur~ylV3-qaXdDWiVc2F5NCoFA~AkXwps2-UcRkk2L60K5qBy5kPnTmwvxdfwl532NTheLdFfvYlVJbLnNWG1iC-RGL',
-  mapStyle : Cesium.BingMapsStyle.AERIAL
-});
-
-Cesium.terrainProvider = new Cesium.CesiumTerrainProvider({
-  requestVertexNormals : true, 
-  url:"https://assets.agi.com/stk-terrain/v1/tilesets/world/tiles",
-});
-
-///
-/// Singelton convenience handle on TileServer
+/// Singelton convenience handles
 /// TODO an AFrame System could do this https://aframe.io/docs/0.7.0/core/systems.html
 ///
 
 TileServer.instance = function() {
+  let guder = (new URLSearchParams(window.location.search)).get("guder");
   if(TileServer.tileServer) return TileServer.tileServer;
-  TileServer.tileServer = new TileServer(Cesium.terrainProvider, Cesium.imageProvider);
+  let provider = new Cesium.CesiumTerrainProvider({
+    requestVertexNormals : true, 
+    url:"https://assets.agi.com/stk-terrain/v1/tilesets/world/tiles",
+  });
+  TileServer.tileServer = new TileServer(provider,ImageServer.instance(),guder ? 1 : 0);
   return TileServer.tileServer;
 };

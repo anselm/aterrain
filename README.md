@@ -2,9 +2,11 @@ A multiplayer game built on top of a-terrain
 
 map bugs:
 
-1) Gudermannian. Far field views of the globe have the earth image draped wrongly because the mercator projection is not being implemented.
-   See the toGeometry() method in TileServer.js where I put an if(false) {} block of code that attempts to distort the vertices.
-   
+1) Gudermannian implementation needs more thought.
+   Right now it can be turned off and on with a parameter such as http://localhost:8000/?name=asdf&guder=1
+   The problem is that it's being computed in vertex space... and that means the tiles are not all equal size.
+   As well the Cesium Image Provider has some tension with directly warping the tiles - it's not clear... right now Bing is being used directly.
+
    https://en.wikipedia.org/wiki/Mercator_projection#Small_element_geometry -> https://en.wikipedia.org/wiki/Web_Mercator
    https://en.wikipedia.org/wiki/Gudermannian_function
    http://aperturetiles.com/docs/development/api/jsdocs/binning_WebMercatorTilePyramid.js.html
