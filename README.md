@@ -12,8 +12,9 @@ What is this?
 Lots of bugs left:
 
   + Still some issues with gudermannian deprojection of mercator and determining which tiles are visible
+  + Tack &guder=1 to see reprojected meshes - which look better but have side effects (see issues)
   + Looks like the tiles I'm asking for may be illegal in some cases - needs study
-  + See the issues list in github
+  + See the issues list in github for more details
 
 General todos:
 
