@@ -139,6 +139,7 @@ class ImageServerBing {
       let subdomains = json.resourceSets[0].resources[0].imageUrlSubdomains;
       scope.subdomain = subdomains[~~(subdomains.length * Math.random())];
       scope.imageurl = json.resourceSets[0].resources[0].imageUrl;
+      scope.imageurl = scope.imageurl.replace("http", "https");
       scope.imageurl = scope.imageurl.replace("{culture}", "en-US");
       scope.imageurl = scope.imageurl.replace("{subdomain}",scope.subdomain);
       callback();
