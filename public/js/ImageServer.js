@@ -134,7 +134,7 @@ class ImageServerBing {
   }
   ready(callback) {
     let scope = this;
-    let metadata = "http://dev.virtualearth.net/REST/V1/Imagery/Metadata/Aerial?output=json&include=ImageryProviders&key=RsYNpiMKfN7KuwZrt8ur~ylV3-qaXdDWiVc2F5NCoFA~AkXwps2-UcRkk2L60K5qBy5kPnTmwvxdfwl532NTheLdFfvYlVJbLnNWG1iC-RGL";
+    let metadata = "https://dev.virtualearth.net/REST/V1/Imagery/Metadata/Aerial?output=json&include=ImageryProviders&key=RsYNpiMKfN7KuwZrt8ur~ylV3-qaXdDWiVc2F5NCoFA~AkXwps2-UcRkk2L60K5qBy5kPnTmwvxdfwl532NTheLdFfvYlVJbLnNWG1iC-RGL";
     fetch(metadata).then(response => { return response.json() }).then( json => {
       let subdomains = json.resourceSets[0].resources[0].imageUrlSubdomains;
       scope.subdomain = subdomains[~~(subdomains.length * Math.random())];
@@ -209,9 +209,6 @@ class ImageServerBing {
     let u1 = this.imageurl.replace("{quadkey}", quadkey1);
     let u2 = this.imageurl.replace("{quadkey}", quadkey2);
 
-//    let u1 = "http://ecn.t0.tiles.virtualearth.net/tiles/a"+quadkey1+".jpeg?g=6314&mkt=en-US&shading=hill";
-  //  let u2 = "http://ecn.t0.tiles.virtualearth.net/tiles/a"+quadkey2+".jpeg?g=6314&mkt=en-US&shading=hill";
-
     Promise.all([this.load(u1),this.load(u2)]).then( results => {
       let scratch = this.scratchpad();
       scratch.paint(results[0],{x1:0,y1:0,x2:256,y2:128});
@@ -234,11 +231,11 @@ class ImageServerBing {
 
 ImageServer.instance = function() {
   if(ImageServer.imageServer) return ImageServer.imageServer;
-  let provider = new Cesium.BingMapsImageryProvider({
-    url : 'https://dev.virtualearth.net',
-    key : 'RsYNpiMKfN7KuwZrt8ur~ylV3-qaXdDWiVc2F5NCoFA~AkXwps2-UcRkk2L60K5qBy5kPnTmwvxdfwl532NTheLdFfvYlVJbLnNWG1iC-RGL',
-    mapStyle : Cesium.BingMapsStyle.AERIAL
-  });
-  ImageServer.imageServer = new ImageServerBing(provider);
+  //let provider = new Cesium.BingMapsImageryProvider({
+  //  url : 'https://dev.virtualearth.net',
+  //  key : 'RsYNpiMKfN7KuwZrt8ur~ylV3-qaXdDWiVc2F5NCoFA~AkXwps2-UcRkk2L60K5qBy5kPnTmwvxdfwl532NTheLdFfvYlVJbLnNWG1iC-RGL',
+  //  mapStyle : Cesium.BingMapsStyle.AERIAL
+  //});
+  ImageServer.imageServer = new ImageServerBing();
   return ImageServer.imageServer;
 };
