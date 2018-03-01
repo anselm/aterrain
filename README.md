@@ -9,10 +9,14 @@ What is this?
   + there is a thin multiplayer game on top of the globe to showcase the globe
   + open source, no license right now, do whatever you want with it
 
-What is left?
+Lots of bugs left:
 
-  + Still early stages; barely runs, lots of little bugs still
+  + Still some issues with gudermannian deprojection of mercator and determining which tiles are visible
+  + Looks like the tiles I'm asking for may be illegal in some cases - needs study
   + See the issues list in github
+
+General todos:
+
   + Needs a nicer camera navigation syistem
   + Server was using sockets but I had some issues; switch back to sockets
   + Put the server somewhere stable on the internet
