@@ -1,5 +1,6 @@
 What is this?
 
+  + See https://anselm.github.io/aterrain_game/public/index.html?name=joe for an example of this running
   + A space to face globe of the earth with buildings, leveraging cesium and cesium datasets
   + Intended to be a thin wrapper on cesium but has ended up doing a bit more heavy lifting
   + A focus on street level walking around; so precision and accuracy is important
