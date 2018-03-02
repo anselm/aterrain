@@ -1,9 +1,15 @@
 
-/*
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///
+/// Use Cesium to fetch tiles from Bing
+/// Uses a CPU based technique to build up an image tile.
+/// TODO query for tile index instead?
+/// TODO can I ask for non mercator?
+/// TODO try correct images in WASM on cpu?
+///
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// this used a complicated extent estimation strategy - but since image tiles are a multiple of terrain tiles it is not needed
-
-class ImageServerUnused {
+class ImageServer {
 
   constructor() {
 
@@ -128,12 +134,10 @@ class ImageServerUnused {
   }
 }
 
-*/
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///
-/// Fetch Bing tiles without using Cesium
-///
+/// Wrapper for fetching image tiles
 /// These are unfortunately in a Mercator projection which requires correction elsewhere
 /// TODO *** see if these can be corrected with WASM on CPU rather than in the tile vertex space?
 ///
@@ -179,10 +183,9 @@ class BingImageProvider {
     return quadKey.join('');
   }
   requestImage(x,y,lod) {
-    lod++; // go down one level because there is a nice symmetry with x terrain tiles == x image tiles if we kitty corner here
     let scope = this;
     return new Promise(function(resolve,reject) {
-      let quadkey = scope.quadkey(x,y,lod);
+      let quadkey = scope.quadkey(x,y*2,lod+1);
       let url = scope.imageurl.replace("{quadkey}", quadkey);
       let image = new Image();
       image.onload = unused => { resolve(image); }
@@ -190,7 +193,7 @@ class BingImageProvider {
     });
   }
 }
-
+/*
 class ImageServer {
   constructor() {
 
@@ -199,39 +202,32 @@ class ImageServer {
     this.data.pixelsWide = 256; // tile size
     //this.data.mapStyle = Cesium.BingMapsStyle.AERIAL;
 
-    this.data.source = 0;
-
     // Custom abstraction - bypasses Cesium - not used
-    if(this.data.source == 0) {
-      this.imageProvider = new BingImageProvider();
-    } else if(this.data.source == 1) {
-       // Something seems to be not working with this provider although it's the one I'd prefer to use right now - mar 1 2018
-       this.data.CesiumionAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYmI0ZmY0My1hOTg5LTQzNWEtYWRjNy1kYzYzNTM5ZjYyZDciLCJpZCI6NjksImFzc2V0cyI6WzM3MDQsMzcwMywzNjk5LDM2OTNdLCJpYXQiOjE1MTY4MzA4ODZ9.kM-JnlG-00e7S_9fqS_QpXYTg7y5-cIEcZEgxKwRt5E';
-       this.data.url = 'https://beta.cesium.com/api/assets/3693?access_token=' + this.data.CesiumionAccessToken;
-       this.imageProvider = new Cesium.createTileMapServiceImageryProvider(this.data);
-    } else if(this.data.source == 2) {
-      // Cesium Bing abstraction
-      this.data.key = 'RsYNpiMKfN7KuwZrt8ur~ylV3-qaXdDWiVc2F5NCoFA~AkXwps2-UcRkk2L60K5qBy5kPnTmwvxdfwl532NTheLdFfvYlVJbLnNWG1iC-RGL';
-      this.data.url = 'https://dev.virtualearth.net',
-      this.imageProvider = new Cesium.BingMapsImageryProvider(this.data);
-    }
+    this.imageProvider = new BingImageProvider();
+
+    // Something seems to be not working with this provider although it's the one I'd prefer to use right now - mar 1 2018
+    // this.data.CesiumionAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYmI0ZmY0My1hOTg5LTQzNWEtYWRjNy1kYzYzNTM5ZjYyZDciLCJpZCI6NjksImFzc2V0cyI6WzM3MDQsMzcwMywzNjk5LDM2OTNdLCJpYXQiOjE1MTY4MzA4ODZ9.kM-JnlG-00e7S_9fqS_QpXYTg7y5-cIEcZEgxKwRt5E';
+    // this.data.url = 'https://beta.cesium.com/api/assets/3693?access_token=' + this.data.CesiumionAccessToken;
+    // this.imageProvider = new Cesium.createTileMapServiceImageryProvider(this.data);
+
+    // Cesium Bing abstraction
+    //this.data.key = 'RsYNpiMKfN7KuwZrt8ur~ylV3-qaXdDWiVc2F5NCoFA~AkXwps2-UcRkk2L60K5qBy5kPnTmwvxdfwl532NTheLdFfvYlVJbLnNWG1iC-RGL';
+    //this.data.url = 'https://dev.virtualearth.net',
+    //this.imageProvider = new Cesium.BingMapsImageryProvider(this.data);
 
   }
   ready(callback) {
-    if(this.data.source == 0) {
-      this.imageProvider.readyPromise(callback);
-    } else {
-      Cesium.when(this.imageProvider.readyPromise).then(callback);
-    }
+    //Cesium.when(this.imageProvider.readyPromise).then(callback);
+    this.imageProvider.readyPromise(callback);
   }
   scratchpad() {
     let canvas = document.createElement('canvas');
     canvas.id = "canvas";
-    canvas.width = this.data.pixelsWide;
-    canvas.height = this.data.pixelsWide;
+    canvas.width = this.pixelsWide;
+    canvas.height = this.pixelsWide;
     canvas.ctx = canvas.getContext("2d");
     canvas.ctx.fillStyle = "#ff00ff";
-    canvas.ctx.fillRect(0,0,this.data.pixelsWide,this.data.pixelsWide);
+    canvas.ctx.fillRect(0,0,this.pixelsWide,this.pixelsWide);
     let debug = this.data.debug;
     canvas.paint = function(image,extent) {
       canvas.ctx.drawImage(image,extent.x1,extent.y1,extent.x2,extent.y2);
@@ -257,18 +253,34 @@ class ImageServer {
     let x = scheme.xtile;
     let y = scheme.ytile;
     let lod = scheme.lod;
+    //let p1 = this.imageProvider.requestImage(x,y*2,lod+1);
+  //  let p2 = this.imageProvider.requestImage(x,y*2+1,lod+1);
     let scratch = this.scratchpad();
-    let p1 = this.imageProvider.requestImage(x,y+y,lod);
-    let p2 = this.imageProvider.requestImage(x,y+y+1,lod);
+      callback(scratch.material());
+
+      return;
+
+
     Promise.all([p1,p2]).then( results => {
-      scratch.paint(results[0],{x1:0,y1:0,x2:256,y2:128});
-      scratch.paint(results[1],{x1:0,y1:128,x2:256,y2:128});
+      console.log("=========== got images ==========");
+      console.log(results[0]);
+      console.log(results[1]);
+
+var src = document.getElementById("test");
+let img = document.createElement("img");
+img.src = results[0].src;
+src.appendChild(img);
+
+//      scratch.paint(img,{x1:0,y1:0,x2:256,y2:128});
+  //    scratch.paint(img,{x1:0,y1:128,x2:256,y2:128});
       callback(scratch.material());
     }, function(error) {
+      alert("failure");
       console.error(error);
     });
   }
 }
+*/
 
 ///
 /// Singelton convenience handles

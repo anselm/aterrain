@@ -68,23 +68,22 @@ body { background:#f0e0e0; overflow:hidden;}
 
 ## Design approach currently chosen for connecting **Cesium** to **ThreeJS and AFrame**
 
-### Use cases
-
-A full globe cartographic renderer uses a tile based approach to render the planet surface. There is a pyramid of tiles at different resolutions that represent the terrain elevation and separately the images that are draped on the tiles. There are also 3d-tiles to represent buildings. A rendered view consists of fetching the visible sources at a given longitude, latitude and elevation from the ground and compositing them all together into a plausible view.
-
-In the case of this engine it is possible to render a full globe - but the goal is more to be able to render a small piece of the earth. The use cases imagined are more focused on "near field" interactions such as exploring a city landscape on foot, or mixed reality use cases such as holding up a tablet (or wearing augmented reality glasses) and seeing a virtual world superimposed on the real world.
-
 ### Goals
 
-Guiding the decisions here include:
+Design choices here include:
 
 - a desire to avoid re-inventing the wheel.
 - a desire to allow remixing and reuse; where Cesium geometry can be collided against game object.
-- a desire to avoid offering Cesium in a sense - if somebody wants Cesium then just use Cesium.
+- be ok with failing to do all the fancy stuff that Cesium does
+- focus more at street level rather than globe views
+
+In general a globe renderer uses a tile based approach to render the planet surface. There is a pyramid of tiles at different resolutions that represent the terrain elevation and separately the images that are draped on the tiles. There are also 3d-tiles to represent buildings. A rendered view consists of fetching the visible sources at a given longitude, latitude and elevation from the ground and compositing them all together into a plausible view.
+
+In the case of this engine it is possible to render a full globe - but the goal is more to be able to render a small piece of the earth. The use cases imagined are more focused on "near field" interactions, collisions, mixing in other aframe components, allowing activities such as exploring a city landscape on foot, or mixed reality use cases such as holding up a tablet (or wearing augmented reality glasses) and seeing a virtual world superimposed on the real world.
 
 ### Cesium
 
-Cesium is a best of breed Virtual Globe with a superbly elegant and robust javascript implementation. The work is complex and precise, and represents years of labor, thought and architectural framing considerations and refactoring. For example see (Cesium Nasa Mars Trek)[https://marstrek.jpl.nasa.gov/]. For a technical perspective on the features of this globe viewer see [Cesium Presentation](https://cesium.com/presentations) and (3D Engine Design for Virtual Globes)[https://www.virtualglobebook.com/].
+Cesium is a best of breed Virtual Globe with a superbly elegant and robust javascript implementation. The work is complex and precise, and represents years of labor, thought and architectural framing considerations and refactoring. For example see (Cesium Nasa Mars Trek)[https://marstrek.jpl.nasa.gov/]. For a technical perspective on the features of this globe viewer see [Cesium Presentation](https://cesium.com/presentations) and (3D Engine Design for Virtual Globes)[https://www.virtualglobebook.com/]. For a quick overview of concerns that affect even the implementation of this wrapper see (Under The Hood Of Virtual Globes)[https://www.virtualglobebook.com/Under_the_Hood_of_Virtual_Globes.pdf].
 
 The architecture of Cesium (at a high level and skipping many details) can be seen as something like so:
 
@@ -116,9 +115,11 @@ As we can see above Cesium mplements effectively a high level 3d game engine in 
 The approach currently looks something like this architecturally:
 
   - A-TERRAIN Navigation Controls ...
+    - implements a visible tile strategy (what tiles can be seen at what elevation)
   - A-TERRAIN ... produces tiles on demand for a full globe coverage
     - A-LL ... an object placed on the globe
     - A-TILE ... a single tile of the globe
+      - 
       - TileServer
         - Cesium TileProvider
         - Currently produce terrain tiles by hand into 3js
@@ -131,8 +132,8 @@ The approach currently looks something like this architecturally:
   - ThreeJS
   - WebGL
 
-A-TERRAIN is a poor mans globe all by itself. It uses Cesium and allows zooming and panning to showcase the ability to produce a globe. However it lacks all of the features of Cesium and there are unresolved issues with respect to Camera zdepth (near/far) and suchlike.
+## Areas for improvement ##
 
-To some degree this wrapper does more work than it should - and there is an ongoing effort to find ideal cleaving points between the two engines to see if this work can be reduced. With the help of Cesium there may also be some collaboration to push some of the features here to Cesium and thus reduce the weight on this engine. One key factor is that Cesium does much of the reprojection work with shaders, and there is a goal here to avoid shaders.
+A-TERRAIN in its current incarnation is a poor globe view. It uses Cesium and allows zooming and panning to showcase the ability to produce a globe. However it lacks all of the features of Cesium and there are unresolved issues with respect to Camera zdepth (near/far) and suchlike. As well to some degree this wrapper does more work than it should - and there is an ongoing effort to find ideal cleaving points between the two engines to see if this work can be reduced. With the help of Cesium there may also be some collaboration to push some of the features here to Cesium and thus reduce the weight on this engine. One key factor is that Cesium does much of the reprojection work with shaders, and there is a goal here to avoid shaders.
 
 
