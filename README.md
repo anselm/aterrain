@@ -66,60 +66,70 @@ body { background:#f0e0e0; overflow:hidden;}
 
 ## Questions and Community
 
-## Design approach currently chosen for connecting **Cesium** to **ThreeJS/AFrame**
+## Design approach currently chosen for connecting **Cesium** to **ThreeJS and AFrame**
 
-** Use cases ** A full globe cartographic renderer uses a tile based approach to render the planet surface. There is a pyramid of tiles at different resolutions that represent the terrain elevation and separately the images that are draped on the tiles. There are also 3d-tiles to represent buildings. A rendered view consists of fetching the visible sources at a given longitude, latitude and elevation from the ground and compositing them all together into a plausible view.
+### Use cases
+
+A full globe cartographic renderer uses a tile based approach to render the planet surface. There is a pyramid of tiles at different resolutions that represent the terrain elevation and separately the images that are draped on the tiles. There are also 3d-tiles to represent buildings. A rendered view consists of fetching the visible sources at a given longitude, latitude and elevation from the ground and compositing them all together into a plausible view.
 
 In the case of this engine it is possible to render a full globe - but the goal is more to be able to render a small piece of the earth. The use cases imagined are more focused on "near field" interactions such as exploring a city landscape on foot, or mixed reality use cases such as holding up a tablet (or wearing augmented reality glasses) and seeing a virtual world superimposed on the real world.
 
-** Goals ** guiding the decisions here are:
+### Goals
+
+Guiding the decisions here include:
 
 - a desire to avoid re-inventing the wheel.
 - a desire to allow remixing and reuse; where Cesium geometry can be collided against game object.
 - a desire to avoid offering Cesium in a sense - if somebody wants Cesium then just use Cesium.
 
-**Cesium** is a best of breed Virtual Globe with a simply superb javascript implementation. At a 10000 foot view it combines a number of features to provide an accurate visualization of a globe in 3d. This work is fairly pendantic and precise, and represents years of labor, thought and architectural framing. For example see (Cesium Nasa Mars Trek)[https://marstrek.jpl.nasa.gov/]. For a technical perspective on the features of this globe viewer see [Cesium Presentation](https://cesium.com/presentations) and (3D Engine Design for Virtual Globes)[https://www.virtualglobebook.com/].
+### Cesium
+
+Cesium is a best of breed Virtual Globe with a superbly elegant and robust javascript implementation. The work is complex and precise, and represents years of labor, thought and architectural framing considerations and refactoring. For example see (Cesium Nasa Mars Trek)[https://marstrek.jpl.nasa.gov/]. For a technical perspective on the features of this globe viewer see [Cesium Presentation](https://cesium.com/presentations) and (3D Engine Design for Virtual Globes)[https://www.virtualglobebook.com/].
 
 The architecture of Cesium (at a high level and skipping many details) can be seen as something like so:
 
-  Cesium Navigation Controls
-  Cesium Geography
-    TerrainProvider
-    ImageryProvider
-    3d tiles (buildings)
-  Cesium Scene
-    Scene, Camera, SkyBox, SkyAtmosphere, 
-    Material, Color
-    Globe, Geometry, Polylines, Primitives, Billboards, Label
-    Shaders
-  Cesium Math
-    Frustrum
-    Bounding Boxes and Spheres
-    Cartographic number
-    Cartesian number
-    Matrix3 / Matrix4
-    Ellipsoid concept
-    Map Projection
+  - Cesium Navigation Controls
+  - Cesium Geography
+    - TerrainProvider
+    - ImageryProvider
+    - 3d tiles (buildings)
+  - Cesium Scene
+    - Scene, Camera, SkyBox, SkyAtmosphere, 
+    - Material, Color
+    - Globe, Geometry, Polylines, Primitives, Billboards, Label
+    - Shaders
+  - Cesium Math
+    - Frustrum
+    - Bounding Boxes and Spheres
+    - Cartographic number
+    - Cartesian number
+    - Matrix3 / Matrix4
+    - Ellipsoid concept
+    - Map Projection
 
-**ThreeJS**. As we can see above Cesium mplements effectively a high level 3d game engine in order to render the views to WebGL. That role collides with ThreeJS and it means that the lightweight composability of using Cesium data in a different context or application is slightly hampered. Depending on a programmers expertise it isn't that hard to repurpose raw tile data, but it makes quick lightweight tests and projects less likely. If some of the power of Cesium can be exposed to threejs (and later perhaps Babylon3d) then more people can embed earth data in their applications. The goal is to use the geographic powers of Cesium but switching to ThreeJS for WebGL bindings and Math.
+### ThreeJS
 
-**Current Choices**. The approach currently looks something like this architecturally:
+As we can see above Cesium mplements effectively a high level 3d game engine in order to render the views to WebGL. That role collides with ThreeJS and it means that the lightweight composability of using Cesium data in a different context or application is slightly hampered. Depending on a programmers expertise it isn't that hard to repurpose raw tile data, but it makes quick lightweight tests and projects less likely. If some of the power of Cesium can be exposed to threejs (and later perhaps Babylon3d) then more people can embed earth data in their applications. The goal is to use the geographic powers of Cesium but switching to ThreeJS for WebGL bindings and Math.
 
-  A-TERRAIN Navigation Controls ...
-  A-TERRAIN ... produces tiles on demand for a full globe coverage
-    A-LL ... an object placed on the globe
-    A-TILE ... a single tile of the globe
-      TileServer
-        -> Cesium TileProvider
-        Currently produce terrain tiles by hand into 3js
-        ** Currently this allows only spherical projection. It should allow flat and WGS84 **
-        ** Currently this does a reverse mercator or gudermannian distortion in vertex space to accomodate mercator projected image sources **
-      ImageServer
-        -> Cesium ImageProvider
-        ** Currently these images are in mercator and they should be converted to WGS84 using WASM **
-  AFrame
-  ThreeJS
-  WebGL
+### Current Choices
+
+The approach currently looks something like this architecturally:
+
+  - A-TERRAIN Navigation Controls ...
+  - A-TERRAIN ... produces tiles on demand for a full globe coverage
+    - A-LL ... an object placed on the globe
+    - A-TILE ... a single tile of the globe
+      - TileServer
+        - Cesium TileProvider
+        - Currently produce terrain tiles by hand into 3js
+        - ** Currently this allows only spherical projection. It should allow flat and WGS84 **
+        - ** Currently this does a reverse mercator or gudermannian distortion in vertex space to accomodate mercator projected image sources **
+      - ImageServer
+        - Cesium ImageProvider
+        - ** Currently these images are in mercator and they should be converted to WGS84 using WASM **
+  - AFrame
+  - ThreeJS
+  - WebGL
 
 A-TERRAIN is a poor mans globe all by itself. It uses Cesium and allows zooming and panning to showcase the ability to produce a globe. However it lacks all of the features of Cesium and there are unresolved issues with respect to Camera zdepth (near/far) and suchlike.
 
