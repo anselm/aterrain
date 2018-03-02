@@ -12,12 +12,15 @@ class TileServer  {
   constructor() {
 
     // looks like terrain is not in mercator -> https://cesiumjs.org/releases/1.2/Build/Documentation/GeographicTilingScheme.html
-    this.terrainProvider = new Cesium.CesiumTerrainProvider({
-      ellipsoid: new Cesium.Ellipsoid(1,1,1),
-      requestVertexNormals : true, 
-      url:"https://assets.agi.com/stk-terrain/v1/tilesets/world/tiles",
-    });
 
+    this.data = {};
+    this.data.CesiumionAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYmI0ZmY0My1hOTg5LTQzNWEtYWRjNy1kYzYzNTM5ZjYyZDciLCJpZCI6NjksImFzc2V0cyI6WzM3MDQsMzcwMywzNjk5LDM2OTNdLCJpYXQiOjE1MTY4MzA4ODZ9.kM-JnlG-00e7S_9fqS_QpXYTg7y5-cIEcZEgxKwRt5E';
+    this.data.ellipsoid = new Cesium.Ellipsoid(1,1,1);
+    this.data.requestVertexNormals = true;
+    this.data.url = "https://assets.agi.com/stk-terrain/v1/tilesets/world/tiles";
+    this.data.url = 'https://beta.cesium.com/api/assets/3699?access_token=' + this.data.CesiumionAccessToken;
+
+    this.terrainProvider = new Cesium.CesiumTerrainProvider(this.data);
     let guder = (new URLSearchParams(window.location.search)).get("guder");
     this.guder = guder ? 1 : 0;
   }

@@ -1,29 +1,42 @@
 
-
-
-///
-/// ImageServer is intended to be a prototype for any arbitrary image provider. The default is for Bing and Cesium terrain tiles.
-/// Note that image tiles cover different geography than terrain tiles.
-/// Note that to avoid a shader the images are composited using a canvas.
-///
+/// Stub used for a global variable - see bottom
+/// TODO not the most elegant thing ever... consider some other approaches?
 
 class ImageServer {
 
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///
+/// Use Cesium to fetch tiles from Bing
+/// Uses a CPU based technique to build up an image tile.
+/// TODO query for tile index instead?
+/// TODO can I ask for non mercator?
+/// TODO try correct images in WASM on cpu?
+///
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 class ImageServerCesium {
-  constructor(imageProvider) {
-    this.imageProvider = new Cesium.BingMapsImageryProvider({
-      url : 'https://dev.virtualearth.net',
-      key : 'RsYNpiMKfN7KuwZrt8ur~ylV3-qaXdDWiVc2F5NCoFA~AkXwps2-UcRkk2L60K5qBy5kPnTmwvxdfwl532NTheLdFfvYlVJbLnNWG1iC-RGL',
-      mapStyle : Cesium.BingMapsStyle.AERIAL
-    });
+
+  constructor() {
+
+    this.data = {};
+    this.data.CesiumionAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYmI0ZmY0My1hOTg5LTQzNWEtYWRjNy1kYzYzNTM5ZjYyZDciLCJpZCI6NjksImFzc2V0cyI6WzM3MDQsMzcwMywzNjk5LDM2OTNdLCJpYXQiOjE1MTY4MzA4ODZ9.kM-JnlG-00e7S_9fqS_QpXYTg7y5-cIEcZEgxKwRt5E';
+    this.data.url = 'https://beta.cesium.com/api/assets/3693?access_token=' + this.data.CesiumionAccessToken;
+    this.data.key = 'RsYNpiMKfN7KuwZrt8ur~ylV3-qaXdDWiVc2F5NCoFA~AkXwps2-UcRkk2L60K5qBy5kPnTmwvxdfwl532NTheLdFfvYlVJbLnNWG1iC-RGL';
+    this.data.mapStyle = Cesium.BingMapsStyle.AERIAL;
+
+    //this.imageProvider = new Cesium.createTileMapServiceImageryProvider(this.data);
+    this.data.url = 'https://dev.virtualearth.net',
+    this.imageProvider = new Cesium.BingMapsImageryProvider(this.data);
     this.pixelsWide = 256; // tile size
     this.debug = true;
   }
+
   ready(callback) {
     Cesium.when(this.imageProvider.readyPromise).then(callback);
   }
+
   scratchpad() {
     let canvas = document.createElement('canvas');
     canvas.id = "canvas";
@@ -128,35 +141,13 @@ class ImageServerCesium {
   }
 }
 
-/*
-var CesiumionAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYmI0ZmY0My1hOTg5LTQzNWEtYWRjNy1kYzYzNTM5ZjYyZDciLCJpZCI6NjksImFzc2V0cyI6WzM3MDQsMzcwMywzNjk5LDM2OTNdLCJpYXQiOjE1MTY4MzA4ODZ9.kM-JnlG-00e7S_9fqS_QpXYTg7y5-cIEcZEgxKwRt5E';
-
-
-var viewer = new Cesium.Viewer('cesiumContainer', {
-
-    imageryProvider : new Cesium.createTileMapServiceImageryProvider({
-
-        url : 'https://beta.cesium.com/api/assets/3693?access_token=' + CesiumionAccessToken
-
-    }),
-
-    terrainProvider : new Cesium.CesiumTerrainProvider({
-
-        url : 'https://beta.cesium.com/api/assets/3699?access_token=' + CesiumionAccessToken
-
-    }),
-
-    baseLayerPicker : false,
-
-    infoBox : false
-
-});
-
- */
-
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///
-/// Directly fetch bing tiles
+/// Directly fetch bing tiles - bypass Cesium
+/// These are unfortunately in a Mercator projection which requires correction elsewhere
+/// TODO *** see if these can be corrected with WASM on CPU rather than in the tile vertex space?
 ///
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class ImageServerBing {
   constructor() {
@@ -263,6 +254,6 @@ class ImageServerBing {
 
 ImageServer.instance = function() {
   if(ImageServer.imageServer) return ImageServer.imageServer;
-  ImageServer.imageServer = new ImageServerBing();
+  ImageServer.imageServer = new ImageServerCesium();
   return ImageServer.imageServer;
 };
