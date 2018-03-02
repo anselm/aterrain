@@ -1,4 +1,6 @@
 
+
+
 ///
 /// ImageServer is intended to be a prototype for any arbitrary image provider. The default is for Bing and Cesium terrain tiles.
 /// Note that image tiles cover different geography than terrain tiles.
@@ -11,8 +13,12 @@ class ImageServer {
 
 class ImageServerCesium {
   constructor(imageProvider) {
-    this.imageProvider = imageProvider;
-    this.pixelsWide = 256; // bing tile size
+    this.imageProvider = new Cesium.BingMapsImageryProvider({
+      url : 'https://dev.virtualearth.net',
+      key : 'RsYNpiMKfN7KuwZrt8ur~ylV3-qaXdDWiVc2F5NCoFA~AkXwps2-UcRkk2L60K5qBy5kPnTmwvxdfwl532NTheLdFfvYlVJbLnNWG1iC-RGL',
+      mapStyle : Cesium.BingMapsStyle.AERIAL
+    });
+    this.pixelsWide = 256; // tile size
     this.debug = true;
   }
   ready(callback) {
@@ -122,6 +128,31 @@ class ImageServerCesium {
   }
 }
 
+/*
+var CesiumionAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYmI0ZmY0My1hOTg5LTQzNWEtYWRjNy1kYzYzNTM5ZjYyZDciLCJpZCI6NjksImFzc2V0cyI6WzM3MDQsMzcwMywzNjk5LDM2OTNdLCJpYXQiOjE1MTY4MzA4ODZ9.kM-JnlG-00e7S_9fqS_QpXYTg7y5-cIEcZEgxKwRt5E';
+
+
+var viewer = new Cesium.Viewer('cesiumContainer', {
+
+    imageryProvider : new Cesium.createTileMapServiceImageryProvider({
+
+        url : 'https://beta.cesium.com/api/assets/3693?access_token=' + CesiumionAccessToken
+
+    }),
+
+    terrainProvider : new Cesium.CesiumTerrainProvider({
+
+        url : 'https://beta.cesium.com/api/assets/3699?access_token=' + CesiumionAccessToken
+
+    }),
+
+    baseLayerPicker : false,
+
+    infoBox : false
+
+});
+
+ */
 
 ///
 /// Directly fetch bing tiles
@@ -232,11 +263,6 @@ class ImageServerBing {
 
 ImageServer.instance = function() {
   if(ImageServer.imageServer) return ImageServer.imageServer;
-  //let provider = new Cesium.BingMapsImageryProvider({
-  //  url : 'https://dev.virtualearth.net',
-  //  key : 'RsYNpiMKfN7KuwZrt8ur~ylV3-qaXdDWiVc2F5NCoFA~AkXwps2-UcRkk2L60K5qBy5kPnTmwvxdfwl532NTheLdFfvYlVJbLnNWG1iC-RGL',
-  //  mapStyle : Cesium.BingMapsStyle.AERIAL
-  //});
   ImageServer.imageServer = new ImageServerBing();
   return ImageServer.imageServer;
 };

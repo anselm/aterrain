@@ -1,48 +1,6 @@
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
-// math helpers
-// TODO perhaps put this somewhere cleaner later
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// https://en.wikipedia.org/wiki/Gudermannian_function
-// http://aperturetiles.com/docs/development/api/jsdocs/binning_WebMercatorTilePyramid.js.html
-// https://stackoverflow.com/questions/1166059/how-can-i-get-latitude-longitude-from-x-y-on-a-mercator-map-jpeg
-
-var EPSG_900913_SCALE_FACTOR = 20037508.342789244;
-var EPSG_900913_LATITUDE = 85.05112878;
-var DEGREES_TO_RADIANS = Math.PI / 180.0; // Factor for changing degrees to radians
-var RADIANS_TO_DEGREES = 180.0 / Math.PI; // Factor for changing radians to degrees
-
-let pi2deg = function(v) { return v*RADIANS_TO_DEGREES; }
-let deg2pi = function(v) { return v*DEGREES_TO_RADIANS; }
-
-function sinh( arg ) {
-  return (Math.exp(arg) - Math.exp(-arg)) / 2.0;
-}
-
-function gudermannian( y ) {
-  // converts a y value from -PI(bottom) to PI(top) into the mercator projection latitude
-  return Math.atan(sinh(y)) * RADIANS_TO_DEGREES;
-}
-
-function gudermannianInv( latitude ) {
-  // converts a latitude value from -EPSG_900913_LATITUDE to EPSG_900913_LATITUDE into a y value from -PI(bottom) to PI(top)
-  let sign = ( latitude !== 0 ) ? latitude / Math.abs(latitude) : 0;
-  let sin = Math.sin(latitude * DEGREES_TO_RADIANS * sign);
-  return sign * (Math.log((1.0 + sin) / (1.0 - sin)) / 2.0);
-}
-
-function gudermannianToLinear(value) {
-  return (gudermannianInv( value ) / Math.PI) * EPSG_900913_LATITUDE;
-}
-
-function gudermannian_radians(arg) {
-  return Math.atan(sinh(arg*2));
-}
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///
 /// TileServer is intended to be a prototypical elevation tile provider - by default for Cesium tiles
 /// TODO change this to an aframe-system
@@ -51,9 +9,16 @@ function gudermannian_radians(arg) {
 
 class TileServer  {
  
-  constructor(terrainProvider,imageProvider,guder) {
-    this.terrainProvider = terrainProvider;
-    this.imageProvider = imageProvider;
+  constructor() {
+
+    // looks like terrain is not in mercator -> https://cesiumjs.org/releases/1.2/Build/Documentation/GeographicTilingScheme.html
+    this.terrainProvider = new Cesium.CesiumTerrainProvider({
+      ellipsoid: new Cesium.Ellipsoid(1,1,1),
+      requestVertexNormals : true, 
+      url:"https://assets.agi.com/stk-terrain/v1/tilesets/world/tiles",
+    });
+
+    let guder = (new URLSearchParams(window.location.search)).get("guder");
     this.guder = guder ? 1 : 0;
   }
 
@@ -248,10 +213,7 @@ class TileServer  {
         let latrad = scheme.rect.north - scheme.degrees_latrad * y / scale;
 
         if(this.guder) {
-          // Here is my attempt to take the idealized surface and distort the vertices to produce the right visual appearance for image draping
-          let arg = latrad*2;
-          let e = (Math.exp(arg) - Math.exp(-arg)) / 2.0;
-          latrad = Math.atan(e);  // http://mathworld.wolfram.com/InverseTangent.html
+          latrad = gudermannian_radians(latrad);
         }
 
         let radius = scheme.radius;
@@ -330,6 +292,7 @@ class TileServer  {
 
   produceTile(data,callback) {
     let scheme = this.ll2yx(data);
+    this.imageProvider = ImageServer.instance(); // not the most elegant... TODO move? have a parent wrapper for both providers?
     this.imageProvider.provideImage(scheme, material => {
       scheme.material = material;
       Cesium.when(this.terrainProvider.requestTileGeometry(scheme.xtile,scheme.ytile,scheme.lod),tile => {
@@ -348,12 +311,7 @@ class TileServer  {
 ///
 
 TileServer.instance = function() {
-  let guder = (new URLSearchParams(window.location.search)).get("guder");
   if(TileServer.tileServer) return TileServer.tileServer;
-  let provider = new Cesium.CesiumTerrainProvider({
-    requestVertexNormals : true, 
-    url:"https://assets.agi.com/stk-terrain/v1/tilesets/world/tiles",
-  });
-  TileServer.tileServer = new TileServer(provider,ImageServer.instance(),guder ? 1 : 0);
+  TileServer.tileServer = new TileServer();
   return TileServer.tileServer;
 };
