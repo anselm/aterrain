@@ -237,10 +237,7 @@ class ImageServer {
   }
 
   // this method calculates the image tile and fractional component (ie which pixel) of the image tile to fetch
-  projection2tile(scheme,image_lod,x,y) {
-    // get latitude and longitude of this point in radians
-    let lon = scheme.rect.west + x*scheme.degrees_lonrad/256; // range -PI to PI
-    let tileX = (lon+Math.PI)/(Math.PI*2) * image_lod;
+  projection2tile(scheme,image_lod,y) {
     // which tile in the y axis - and retain fractional pixel pos
     let lat = scheme.rect.north - y*scheme.degrees_latrad/256; // range PI/2 to -PI/2
     // https://msdn.microsoft.com/en-us/library/bb259689.aspx -> no data past these points (I want max Y to be within the previous tile)
@@ -248,7 +245,7 @@ class ImageServer {
     if(lat <= -1.48442222975) lat = -1.48442222974;
     let sinLat = Math.sin(lat);
     let tileY = (0.5 - Math.log((1 + sinLat) / (1 - sinLat)) / (4 * Math.PI)) * image_lod;
-    return {x:tileX,y:tileY};
+    return tileY;
   }
 
   provideImageProjected(scheme,callback) {
@@ -257,26 +254,13 @@ class ImageServer {
     let image_lod = Math.pow(2,scheme.lod+1);
 
     // where is the top and bottom tile?
-    let txy1 = this.projection2tile(scheme,image_lod,0,0);
-    let txy2 = this.projection2tile(scheme,image_lod,255,255);
-    let tx1 = scheme.xtile; // Math.floor(txy1.x);
-    let tx2 = scheme.xtile; // Math.floor(txy2.x);
-    let ty1 = Math.floor(txy1.y);
-    let ty2 = Math.floor(txy2.y);
-
-    if(false) {
-      console.log("================= fetching required tiles");
-      console.log(scheme);
-      console.log(txy1);
-      console.log(txy2);
-      console.log(tx1 + " horizontally to " + tx2);
-      console.log(ty1 + " vertically to " + ty2);
-    }
+    let ty1 = this.projection2tile(scheme,image_lod,0,0);
+    let ty2 = this.projection2tile(scheme,image_lod,255,255);
+    let tx1 = scheme.xtile;
 
     // load entire range of tiles
     let promises = [];
-    for(let i = ty1;i<=ty2;i++) {
-      console.log("looking for " + tx1 + " " + i + " " + (scheme.lod+1));
+    for(let i = Math.floor(ty1);i<=Math.floor(ty2);i++) {
       let p = this.imageProvider.requestImage(tx1,i,scheme.lod+1);
       promises.push(p);
     }
@@ -302,22 +286,19 @@ class ImageServer {
       for(let y = 0;y<256;y++) {
 
         // get reverse mercator pixel location (only y is needed)
-        let txy = this.projection2tile(scheme,image_lod,0,y);
-
-        // which tile is this pixel in in? (only y is needed)
-        let ty = Math.floor(txy.y);
+        let txy = this.projection2tile(scheme,image_lod,y);
 
         // get that tile (offset from the set of tiles we happen to have)
-        let image = results[ty-ty1];
+        let image = results[Math.floor(txy)-Math.floor(ty1)];
 
         // get y in tile
-        let y2 = Math.floor(txy.y*256) & 255;
+        let yy = Math.floor(txy*256) & 255;
 
         // copy that row (there is no horizontal reprojection only vertical)
         for(let x = 0; x<256;x++) {
-          canvas.imageData.data[(y*256+x)*4+0] = image.imageData.data[(y2*256+x)*4+0];
-          canvas.imageData.data[(y*256+x)*4+1] = image.imageData.data[(y2*256+x)*4+1];
-          canvas.imageData.data[(y*256+x)*4+2] = image.imageData.data[(y2*256+x)*4+2];
+          canvas.imageData.data[(y*256+x)*4+0] = image.imageData.data[(yy*256+x)*4+0];
+          canvas.imageData.data[(y*256+x)*4+1] = image.imageData.data[(yy*256+x)*4+1];
+          canvas.imageData.data[(y*256+x)*4+2] = image.imageData.data[(yy*256+x)*4+2];
           canvas.imageData.data[(y*256+x)*4+3] = 255;
         }
       }
@@ -379,8 +360,8 @@ class ImageServer {
     image.canvas.height = 256;
     image.canvas.ctx = image.canvas.getContext("2d");
     image.canvas.ctx.fillStyle = "#ffff00";
-    image.canvas.ctx.fillRect(0,0,255,255);
-    image.canvas.ctx.drawImage(image,0,0,255,255);
+    image.canvas.ctx.fillRect(0,0,256,256);
+    image.canvas.ctx.drawImage(image,0,0,256,256);
     image.imageData = image.canvas.ctx.getImageData(0,0,256,256);
   }
   canvas_to_material(canvas) {
