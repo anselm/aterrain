@@ -185,7 +185,7 @@ class BingImageProvider {
     if(c) {
       console.log("found cached " + key);
       return new Promise(function(resolve,reject) {
-        return c;
+        resolve(c);
       });
     }
 
