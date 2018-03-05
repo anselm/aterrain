@@ -179,6 +179,12 @@ AFRAME.registerComponent('a-terrain', {
 
     //console.log("width visible " + this.data.elevation*2 + " and decided this was the coverage " + count);
 
+    if(false) {
+      // test - just fetch one tile
+      this.updateTile(this.data);
+      return;
+    }
+
     // render enough tiles to cover the degrees visible - regardless of current lod
     for(let i = -count;i<count+1;i++) {
       for(let j = -count;j<count+1;j++) {

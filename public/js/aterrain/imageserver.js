@@ -179,10 +179,9 @@ class BingImageProvider {
 
   requestImage(x,y,lod) {
     let scope = this;
-    console.log("starting to get image");
 
     let key = x + "-" + y + "-" + lod;
-    let c = this.cached[key];
+    let c = scope.cached[key];
     if(c) {
       console.log("found cached " + key);
       return new Promise(function(resolve,reject) {
@@ -191,13 +190,11 @@ class BingImageProvider {
     }
 
     return new Promise(function(resolve,reject) {
-      console.log("image promise starting");
       let quadkey = scope.quadkey(x,y,lod);
       let url = scope.imageurl.replace("{quadkey}", quadkey);
       let image = new Image();
       image.onload = unused => {
         scope.cached[key] = image;
-        console.log("got image");
         resolve(image);
       }
       fetch(url).then(response => { return response.blob(); }).then( blob => {
@@ -262,9 +259,19 @@ class ImageServer {
     // where is the top and bottom tile?
     let txy1 = this.projection2tile(scheme,image_lod,0,0);
     let txy2 = this.projection2tile(scheme,image_lod,255,255);
-    let tx1 = Math.floor(txy1.x);
+    let tx1 = scheme.xtile; // Math.floor(txy1.x);
+    let tx2 = scheme.xtile; // Math.floor(txy2.x);
     let ty1 = Math.floor(txy1.y);
     let ty2 = Math.floor(txy2.y);
+
+    if(false) {
+      console.log("================= fetching required tiles");
+      console.log(scheme);
+      console.log(txy1);
+      console.log(txy2);
+      console.log(tx1 + " horizontally to " + tx2);
+      console.log(ty1 + " vertically to " + ty2);
+    }
 
     // load entire range of tiles
     let promises = [];
@@ -298,16 +305,19 @@ class ImageServer {
         let txy = this.projection2tile(scheme,image_lod,0,y);
 
         // which tile is this pixel in in? (only y is needed)
-        let ty = Math.floor(txy.y) - ty1;
+        let ty = Math.floor(txy.y);
 
-        // get that tile
-        let image = results[ty];
+        // get that tile (offset from the set of tiles we happen to have)
+        let image = results[ty-ty1];
+
+        // get y in tile
+        let y2 = Math.floor(txy.y*256) & 255;
 
         // copy that row (there is no horizontal reprojection only vertical)
         for(let x = 0; x<256;x++) {
-          canvas.imageData.data[(y*256+x)*4+0] = image.imageData.data[(ty*256+x)*4+0];
-          canvas.imageData.data[(y*256+x)*4+1] = image.imageData.data[(ty*256+x)*4+1];
-          canvas.imageData.data[(y*256+x)*4+2] = image.imageData.data[(ty*256+x)*4+2];
+          canvas.imageData.data[(y*256+x)*4+0] = image.imageData.data[(y2*256+x)*4+0];
+          canvas.imageData.data[(y*256+x)*4+1] = image.imageData.data[(y2*256+x)*4+1];
+          canvas.imageData.data[(y*256+x)*4+2] = image.imageData.data[(y2*256+x)*4+2];
           canvas.imageData.data[(y*256+x)*4+3] = 255;
         }
       }
@@ -332,7 +342,7 @@ class ImageServer {
   }
 
   provideImage(scheme,callback) {
-    this.provideImageUnprojected(scheme,callback);
+    this.provideImageProjected(scheme,callback);
   }
 
   //////////////////////////////////////////////////////////// canvas assistance
