@@ -146,7 +146,7 @@ AFRAME.registerComponent('a-terrain', {
       let distance = (world_radius+groundValue+data.elevation)*data.radius/world_radius;
       // move earth surface here
       obj.position.set(0,0,-distance);
-      console.log("for elevation " + data.elevation + " the lod is " + data.lod + " and ground is at " + groundValue );
+      //console.log("for elevation " + data.elevation + " the lod is " + data.lod + " and ground is at " + groundValue );
     };
 
     // quick set to avoid delays even if stale - ground level is not known yet but waiting for it causes visible delays
