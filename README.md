@@ -4,7 +4,15 @@ Allows rendering of a globe or parts of a globe with elevation, images and build
 
 ## Examples
 
-  - See https://anselm.github.io/aterrain_game/public/index.html?name=joe for an example of this running
+<a href="https://anselm.github.io/aterrain/public/helloworld.html">
+  <img alt="helloworld" target="_blank" src="assets/helloworld.png" width="660">
+</a>
+<a href="https://anselm.github.io/aterrain/public/sanfrancisco.html">
+  <img alt="sanfrancisco" target="_blank" src="assets/helloworld.png" width="660">
+</a>
+<a href="https://anselm.github.io/aterrain/public/multiplayer.html">
+  <img alt="multiplayer" target="_blank" src="assets/helloworld.png" width="660">
+</a>
 
 ## Features
 
@@ -34,30 +42,12 @@ body { background:#f0e0e0; overflow:hidden;}
 <body>
 
 <a-scene cursor="rayOrigin: mouse">
-
-  <a-sphere radius=1050 wireframe=1 segments-height=18 segments-width=36></a-sphere>
-
-  <a-entity a-terrain="lat:45.557749; lon:-122.6794; lod:3; radius:1000; elevation:263727982">
-
-    <a-entity a-ll="lat:45.557749; lon:-122.6794; radius:10;">
-      <a-entity rotation="-90 0 0" scale="0.3 0.3 0.3">
-        <a-entity rotation="0 0 0">
-           <a-animation attribute="rotation"
-               dur="300"
-               fill="forwards"
-               from="0 0 0"
-               to="0 360 0"
-               repeat="indefinite"></a-animation>
-          <a-gltf-model src="assets/duck.gltf"></a-gltf-model>
-        </a-entity>
-      </a-entity>
-    </a-entity>
-
+  <a-entity id="agame-main" visible="true"
+                a-terrain="lat:45.557749; lon:-122.6794; radius:1000; elevation:263727982"
+                a-terrain-controls="lat:45.557749; lon:-122.6794; radius:1000; elevation:263727982"
+                >
   </a-entity>
-
-  <a-entity id="camera" camera="fov:60" mouse-cursor position="0 0 0">
-  </a-entity>
-
+  <a-entity id="camera" camera="fov:45" mouse-cursor position="0 0 0"></a-entity>
 </a-scene>
 
 </body>
@@ -83,7 +73,7 @@ In the case of this engine it is possible to render a full globe - but the goal 
 
 ### Cesium
 
-Cesium is a best of breed Virtual Globe with a superbly elegant and robust javascript implementation. The work is complex and precise, and represents years of labor, thought and architectural framing considerations and refactoring. For example see (Cesium Nasa Mars Trek)[https://marstrek.jpl.nasa.gov/]. For a technical perspective on the features of this globe viewer see [Cesium Presentation](https://cesium.com/presentations) and (3D Engine Design for Virtual Globes)[https://www.virtualglobebook.com/]. For a quick overview of concerns that affect even the implementation of this wrapper see (Under The Hood Of Virtual Globes)[https://www.virtualglobebook.com/Under_the_Hood_of_Virtual_Globes.pdf].
+Cesium is a best of breed Virtual Globe with a javascript implementation. The work is complex and precise, and represents years of labor, thought and architectural framing considerations. For example see [Cesium Nasa Mars Trek](https://marstrek.jpl.nasa.gov/). For a technical perspective on the features of this globe viewer see [Cesium Presentation](https://cesium.com/presentations) and [3D Engine Design for Virtual Globes](https://www.virtualglobebook.com/). For a quick overview of concerns that affect even the implementation of this wrapper see [Under The Hood Of Virtual Globes](https://www.virtualglobebook.com/Under_the_Hood_of_Virtual_Globes.pdf).
 
 The architecture of Cesium (at a high level and skipping many details) can be seen as something like so:
 
@@ -108,7 +98,7 @@ The architecture of Cesium (at a high level and skipping many details) can be se
 
 ### ThreeJS
 
-As we can see above Cesium mplements effectively a high level 3d game engine in order to render the views to WebGL. That role collides with ThreeJS and it means that the lightweight composability of using Cesium data in a different context or application is slightly hampered. Depending on a programmers expertise it isn't that hard to repurpose raw tile data, but it makes quick lightweight tests and projects less likely. If some of the power of Cesium can be exposed to threejs (and later perhaps Babylon3d) then more people can embed earth data in their applications. The goal is to use the geographic powers of Cesium but switching to ThreeJS for WebGL bindings and Math.
+Cesium implements a high level 3d game engine in order to render the views to WebGL. That role collides with ThreeJS and it means that the lightweight composability of using Cesium data in a different context or application is slightly hampered. Depending on a programmers expertise it isn't that hard to repurpose raw tile data, but it makes quick lightweight tests and projects less likely. If some of the power of Cesium can be exposed to threejs (and later perhaps Babylon3d) then more people can embed earth data in their applications. The goal is to use the geographic powers of Cesium but switching to ThreeJS for WebGL bindings and Math.
 
 ### Current Choices
 
