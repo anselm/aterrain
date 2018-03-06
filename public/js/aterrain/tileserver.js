@@ -18,13 +18,14 @@ class TileServer  {
     this.data.requestVertexNormals = true;
     this.data.url = "https://assets.agi.com/stk-terrain/v1/tilesets/world/tiles";
 
-    // there seem to be more missing tiles here - don't use for now
+    // there seem to be more missing tiles here - don't use this source for now?
     //this.data.CesiumionAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYmI0ZmY0My1hOTg5LTQzNWEtYWRjNy1kYzYzNTM5ZjYyZDciLCJpZCI6NjksImFzc2V0cyI6WzM3MDQsMzcwMywzNjk5LDM2OTNdLCJpYXQiOjE1MTY4MzA4ODZ9.kM-JnlG-00e7S_9fqS_QpXYTg7y5-cIEcZEgxKwRt5E';
     //this.data.url = 'https://beta.cesium.com/api/assets/3699?access_token=' + this.data.CesiumionAccessToken;
 
     this.terrainProvider = new Cesium.CesiumTerrainProvider(this.data);
-    let guder = (new URLSearchParams(window.location.search)).get("guder");
-    this.guder = guder ? 1 : 0;
+
+    //let guder = (new URLSearchParams(window.location.search)).get("guder");
+    //this.guder = guder ? 1 : 0;
   }
 
   ready(callback) {
@@ -153,7 +154,7 @@ class TileServer  {
     return new THREE.Vector3(x,y,z);
   }
 
-  toGeometryEmulatingCesium(scene) {
+  toGeometryUnusedTest(scene) {
 
     // some test code to look at how cesium was building the Gudermannian 
 
@@ -217,9 +218,7 @@ class TileServer  {
         // y position for vertex within hull
         let latrad = scheme.rect.north - scheme.degrees_latrad * y / scale;
 
-        if(this.guder) {
-          latrad = gudermannian_radians(latrad);
-        }
+        //if(this.guder) { latrad = gudermannian_radians(latrad); }
 
         let radius = scheme.radius;
         let v = this.ll2v(latrad,lonrad,radius);
@@ -266,8 +265,7 @@ class TileServer  {
       let latrad = tile._vValues[i]/32767*scheme.degrees_latrad + scheme.rect.south;
       let elevation = (((tile._heightValues[i]*(tile._maximumHeight-tile._minimumHeight))/32767.0)+tile._minimumHeight);
 
-      // TODO fix mercator distortion in vertex space for now - unsure if we want to leave this here
-      if(this.guder) { latrad = gudermannian_radians(latrad); }
+      //if(this.guder) { latrad = gudermannian_radians(latrad); }
 
       let v = this.ll2v(latrad,lonrad,(earth_radius+elevation)*scheme.radius/earth_radius);
       geometry.vertices.push(v);
@@ -277,7 +275,6 @@ class TileServer  {
       geometry.faces.push(new THREE.Face3(tile._indices[i], tile._indices[i+1], tile._indices[i+2]));
     }
     // face vertices to linear distribution uv map
-    // TODO this definitely must consider gudermannian mercator projection
     let faces = geometry.faces;
     geometry.faceVertexUvs[0] = [];
     for (let i = 0; i < faces.length ; i++) {

@@ -288,8 +288,7 @@ AFRAME.registerComponent('agame-terrain', {
       return;
     }
 
-this.el.emit("a-terrain:navigate", {lat:this.data.lat, lon: this.data.lon, elevation:this.data.elevation }, false);
-
+    this.el.emit("a-terrain:navigate", {lat:this.data.lat, lon: this.data.lon, elevation:this.data.elevation }, false);
     return;
 
     // authenticate that user... with the state engine... now it is magically networked to all other instances too
@@ -352,78 +351,6 @@ this.el.emit("a-terrain:navigate", {lat:this.data.lat, lon: this.data.lon, eleva
     }
   },
 
-  setup_some_game_controls: function() {
-
-    let dragging = 0;
-    let dragstartx = 0;
-    let dragstarty = 0;
-    let dragstartlon = 0;
-    let dragstartlat = 0;
-
-    let world_radius = TileServer.instance().getRadius();
-    let world_circumference = TileServer.instance().getCircumference();
-
-    // allow click drag navigation around the globe
-    window.addEventListener("mousedown", e => { dragging = 1; e.preventDefault(); });
-    window.addEventListener("mouseup", e => { dragging = 0; e.preventDefault(); });
-    window.addEventListener("mousemove", e => {
-      if(dragging == 0) return;
-      if(dragging == 1) {
-        dragging = 2;
-        dragstartx = e.clientX;
-        dragstarty = e.clientY;
-        dragstartlon = this.data.lon;
-        dragstartlat = this.data.lat;
-      }
-      let x = e.clientX - dragstartx;
-      let y = e.clientY - dragstarty;
-
-      // roughly scale movement speed by current distance from surface
-      this.data.lon = dragstartlon - x * this.data.elevation / world_circumference;
-      this.data.lat = dragstartlat + y * this.data.elevation / world_circumference;
-
-      // not critical but tidy up legal orientations
-      if(this.data.lat > 80) this.data.lat = 80;
-      if(this.data.lat < -80) this.data.lat = -80;
-      if(this.data.lon < -180) this.data.lon += 360;
-      if(this.data.lon > 180) this.data.lon -= 360;
-
-      // Tell the terrain
-      this.el.emit("a-terrain:navigate", {lat:this.data.lat, lon: this.data.lon, elevation:this.data.elevation }, false);
-
-      // could also move the entity optionally - do this for now because it is fun to see in networked scenarios
-      let user = State.instance().user;
-      if(user) {
-        user.lat = this.data.lat; // TODO really lat,lon should be treated as a single concept
-        user.lon = this.data.lon;
-        State.instance().save(user);
-        this.visually_represent_one(user); // TODO this is not really needed because the server will update this
-      }
-
-      e.preventDefault();
-    });
-
-    // zooming 
-    window.addEventListener("wheel",e => {
-
-      // throw away the speed (which is varys by browser anyway) and just get the direction
-      const direction = Math.max(-1, Math.min(1, e.deltaY));
-
-      // zoom in/out - roughly scaled by current elevation
-      this.data.elevation += this.data.elevation * direction * 0.1;
-
-      // limits
-      if(this.data.elevation > world_circumference) this.data.elevation = world_circumference;
-
-      // set near limit to 1 meter
-      if(this.data.elevation < 1) this.data.elevation = 1;
-
-      // tell the terrain engine about this
-      this.el.emit("a-terrain:navigate", {lat:this.data.lat, lon: this.data.lon, elevation:this.data.elevation }, false);
-
-      e.preventDefault();
-    });
-  }
 
 });
 

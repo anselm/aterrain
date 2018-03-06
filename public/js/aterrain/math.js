@@ -17,6 +17,7 @@ var RADIANS_TO_DEGREES = 180.0 / Math.PI; // Factor for changing radians to degr
 let pi2deg = function(v) { return v*RADIANS_TO_DEGREES; }
 let deg2pi = function(v) { return v*DEGREES_TO_RADIANS; }
 
+/*
 function sinh( arg ) {
   return (Math.exp(arg) - Math.exp(-arg)) / 2.0;
 }
@@ -40,3 +41,4 @@ function gudermannianToLinear(value) {
 function gudermannian_radians(arg) {
   return Math.atan(sinh(arg*2));
 }
+*/
