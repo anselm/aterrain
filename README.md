@@ -22,9 +22,9 @@ The primary expected use case is rendering bits and pieces of the world at will.
   <img alt="sanfrancisco" target="_blank" src="https://github.com/anselm/aterrain/blob/master/public/assets/sanfrancisco.png?raw=true" width="660">
 </a>
 
-Here is an example of using this tool as a simple multiplayer experience:
+Here is an example of using this tool as a simple multiplayer experience. Pick a name for yourself with the ?name=yourname parameter and it will give you an unique avatar on the globe. ( to run this you have to enable mixed http/https traffic since github serves the content with https and my own server which hosts the network does not - see <a href="https://stackoverflow.com/questions/18321032/how-to-get-chrome-to-allow-mixed-content">https://stackoverflow.com/questions/18321032/how-to-get-chrome-to-allow-mixed-content</a>):
 
-<a href="https://anselm.github.io/aterrain/public/game.html">
+<a href="https://anselm.github.io/aterrain/public/game.html?name=yourname">
   <img alt="multiplayer" target="_blank" src="https://github.com/anselm/aterrain/blob/master/public/assets/game.png?raw=true" width="660">
 </a>
 
