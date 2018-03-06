@@ -1,7 +1,7 @@
 
 /*
 
-/// this used a complicated extent estimation strategy - but since image tiles are a multiple of terrain tiles it is not needed
+/// this used a complicated extent estimation strategy - it's not very useful
 
 class ImageServerUnused {
 
@@ -133,8 +133,7 @@ class ImageServerUnused {
 ///
 /// Fetch Bing tiles without using Cesium
 ///
-/// These are unfortunately in a Mercator projection which requires correction elsewhere
-/// TODO *** see if these can be corrected with WASM on CPU rather than in the tile vertex space?
+/// These are unfortunately in a Mercator projection which requires correction elsewhere (see below)
 ///
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -204,6 +203,10 @@ class BingImageProvider {
   }
 }
 
+///
+/// ImageServer returns images on demand that match the terrain tile boundaries.
+///
+
 class ImageServer {
 
   constructor() {
@@ -270,6 +273,7 @@ class ImageServer {
     // Paint once loaded
     Promise.all(promises).then(results => {
 
+      // convert the img to something that can be read and written
       if(!results.length) {
         console.error("Image server no image content error 1");
         return;        
@@ -282,6 +286,7 @@ class ImageServer {
         this.canvas_from_image(results[i]);
       }
 
+      // walk the surface and copy pixels over laboriously
       for(let y = 0;y<256;y++) {
 
         // get reverse mercator pixel location (only y is needed)
@@ -301,11 +306,14 @@ class ImageServer {
           canvas.imageData.data[(y*256+x)*4+3] = 255;
         }
       }
+
+      // return to the caller
       callback(this.canvas_to_material_from_imagedata(canvas));
     });
   }
 
-  provideImageUnprojected(scheme,callback) {
+  provideImageUnprojectedUnused(scheme,callback) {
+    // here is a version of the image mapper that doesn't do any projection
     let x = scheme.xtile;
     let y = scheme.ytile;
     let lod = scheme.lod;
