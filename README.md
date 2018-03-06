@@ -4,6 +4,12 @@ Allows rendering of a globe or parts of a globe with elevation, images and build
 
 ## Examples
 
+Need
+ - a hello world example of a globe [done]
+ - an example of viewing a single tile [tricky because the camera has to be placed or the tile placed]
+ - an example of placing a thing in the world at a place
+ - an example of multiple players
+
 <a href="https://anselm.github.io/aterrain/public/helloworld.html">
   <img alt="helloworld" target="_blank" src="https://github.com/anselm/aterrain/blob/master/public/assets/helloworld.png?raw=true" width="660">
 </a>
@@ -42,7 +48,7 @@ body { background:#f0e0e0; overflow:hidden;}
 <body>
 
 <a-scene cursor="rayOrigin: mouse">
-  <a-entity id="agame-main" visible="true"
+  <a-entity id="hello world" visible="true"
                 a-terrain="lat:45.557749; lon:-122.6794; radius:1000; elevation:263727982"
                 a-terrain-controls="lat:45.557749; lon:-122.6794; radius:1000; elevation:263727982"
                 >

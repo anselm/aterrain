@@ -83,7 +83,7 @@ class TileServer  {
     return lod;
   }
 
-  ll2yx(data) {
+  scheme_elaborate(data) {
 
     // This commented out approach is the more correct way get below details from an arbitrary cesium terrain provider - but requires waiting for ready event
     // this.terrainProvider.tilingScheme.getNumberOfXTilesAtLevel(lod) * (180+lon) / 360;
@@ -293,7 +293,7 @@ class TileServer  {
   }
 
   produceTile(data,callback) {
-    let scheme = this.ll2yx(data);
+    let scheme = this.scheme_elaborate(data);
     this.imageProvider = ImageServer.instance(); // not the most elegant... TODO move? have a parent wrapper for both providers?
     this.imageProvider.provideImage(scheme, material => {
       scheme.material = material;

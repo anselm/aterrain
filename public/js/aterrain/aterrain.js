@@ -12,7 +12,7 @@ AFRAME.registerComponent('a-ll', {
     radius: {type: 'number', default:  1},
   },
   init: function() {
-    let scheme = TileServer.instance().ll2yx(this.data);
+    let scheme = TileServer.instance().scheme_elaborate(this.data);
     let v = TileServer.instance().ll2v(scheme.latrad,scheme.lonrad,this.data.radius);
     this.el.object3D.position.set(v.x,v.y,v.z);
     // TODO this is kind of inelegant; it would be better to precisely rotate the entity out to this location in space - see world rotator
@@ -37,7 +37,7 @@ AFRAME.registerComponent('a-building', {
   init: function () {
     let scope = this;
     let data = scope.data;
-    let scheme = TileServer.instance().ll2yx(data);
+    let scheme = TileServer.instance().scheme_elaborate(data);
     GLTFLoader.load(scheme.building_url,function(gltf) {
       scope.el.setObject3D('mesh',gltf.scene);
       // fix building scale to reflect radius here - see https://wiki.openstreetmap.org/wiki/Zoom_levels
@@ -84,14 +84,28 @@ AFRAME.registerComponent('a-tile', {
         // TODO probably shouldn't do this at all - is it needed?
         scheme.elevation = TileServer.instance().findClosestElevation(scheme);
         // TODO it would be nice to know better if there were buildings without triggering an error
-        if(scheme.lod != 15) return;
+        if(scheme.lod < 15) return;
         let building = document.createElement('a-entity');
         // TODO shouldn't the radius be the elevation - examine
         building.setAttribute('a-building',{ lat:data.lat, lon:data.lon, lod:15, radius:data.radius });
         // TODO also this could be parallelized - no reason to wait for the terrain
         this.el.appendChild(building);
+
+/*
+
+    // test - rotate tile to face camera
+    let obj = this.el.object3D;
+    obj.rotation.set(0,0,0);
+    var q = new THREE.Quaternion();
+    q.setFromAxisAngle( new THREE.Vector3(0,1,0), THREE.Math.degToRad(-data.lon) );
+    obj.quaternion.premultiply(q);
+    q.setFromAxisAngle( new THREE.Vector3(1,0,0), THREE.Math.degToRad(data.lat) );
+    obj.quaternion.premultiply(q);
+*/
       });
     });
+
+
   }
 });
 
@@ -156,7 +170,7 @@ AFRAME.registerComponent('a-terrain', {
       let distance = (world_radius+groundValue+data.elevation)*data.radius/world_radius;
       // move earth surface here
       obj.position.set(0,0,-distance);
-      //console.log("for elevation " + data.elevation + " the lod is " + data.lod + " and ground is at " + groundValue );
+      console.log("for elevation " + data.elevation + " the lod is " + data.lod + " and ground is at " + groundValue );
     };
 
     // quick set to avoid delays even if stale - ground level is not known yet but waiting for it causes visible delays
@@ -230,7 +244,7 @@ AFRAME.registerComponent('a-terrain', {
     }
 
     // ask tile server for facts about a given latitude, longitude, lod
-    let scheme = TileServer.instance().ll2yx(this.data);
+    let scheme = TileServer.instance().scheme_elaborate(this.data);
 
     // the number of tiles to fetch in each direction is a function of the camera fov (45') and elevation over the size of a tile at current lod
     let count = Math.floor(this.data.elevation / scheme.width_tile_lat) + 1;
@@ -255,7 +269,7 @@ AFRAME.registerComponent('a-terrain', {
 
   updateTile: function(data) {
     // find tile by uuid that would cover requested point latitude, longitude, lod
-    let scheme = TileServer.instance().ll2yx(data);
+    let scheme = TileServer.instance().scheme_elaborate(data);
     let uuid = scheme.uuid;
     let element = this.el.querySelector("#"+uuid);
     if(element) {
@@ -348,7 +362,7 @@ AFRAME.registerComponent('a-terrain-controls', {
       if(this.data.elevation > world_circumference) this.data.elevation = world_circumference;
 
       // set near limit to 1 meter
-      if(this.data.elevation < 1) this.data.elevation = 1;
+      if(this.data.elevation < 3500) this.data.elevation = 3500;
 
       // tell the terrain engine about this
       this.el.emit("a-terrain:navigate", {lat:this.data.lat, lon: this.data.lon, elevation:this.data.elevation }, false);

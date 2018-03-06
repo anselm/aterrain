@@ -183,7 +183,6 @@ class BingImageProvider {
     let key = x + "-" + y + "-" + lod;
     let c = scope.cached[key];
     if(c) {
-      console.log("found cached " + key);
       return new Promise(function(resolve,reject) {
         resolve(c);
       });
