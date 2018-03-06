@@ -5,13 +5,13 @@ Allows rendering of a globe or parts of a globe with elevation, images and build
 ## Examples
 
 <a href="https://anselm.github.io/aterrain/public/helloworld.html">
-  <img alt="helloworld" target="_blank" src="assets/helloworld.png" width="660">
+  <img alt="helloworld" target="_blank" src="https://github.com/anselm/aterrain/blob/master/public/assets/helloworld.png?raw=true" width="660">
 </a>
 <a href="https://anselm.github.io/aterrain/public/sanfrancisco.html">
-  <img alt="sanfrancisco" target="_blank" src="assets/helloworld.png" width="660">
+  <img alt="sanfrancisco" target="_blank" src="https://github.com/anselm/aterrain/blob/master/public/assets/helloworld.png?raw=true" width="660">
 </a>
 <a href="https://anselm.github.io/aterrain/public/multiplayer.html">
-  <img alt="multiplayer" target="_blank" src="assets/helloworld.png" width="660">
+  <img alt="multiplayer" target="_blank" src="https://github.com/anselm/aterrain/blob/master/public/assets/helloworld.png?raw=true" width="660">
 </a>
 
 ## Features
