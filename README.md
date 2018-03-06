@@ -10,12 +10,20 @@ Need
  - an example of placing a thing in the world at a place
  - an example of multiple players
 
+Although ATerrain isn't meant to be used as a globe renderer (because much more work would be required) it does have some support for globe rendering. Here's an example of that.
+
 <a href="https://anselm.github.io/aterrain/public/helloworld.html">
   <img alt="helloworld" target="_blank" src="https://github.com/anselm/aterrain/blob/master/public/assets/helloworld.png?raw=true" width="660">
 </a>
+
+The primary expected use case is rendering bits and pieces of the world at will. We have data available only for San Francisco right now, and here is an example of that:
+
 <a href="https://anselm.github.io/aterrain/public/sanfrancisco.html">
-  <img alt="sanfrancisco" target="_blank" src="https://github.com/anselm/aterrain/blob/master/public/assets/helloworld.png?raw=true" width="660">
+  <img alt="sanfrancisco" target="_blank" src="https://github.com/anselm/aterrain/blob/master/public/assets/sanfrancisco.png?raw=true" width="660">
 </a>
+
+Here is an example of using this tool as a simple multiplayer game:
+
 <a href="https://anselm.github.io/aterrain/public/multiplayer.html">
   <img alt="multiplayer" target="_blank" src="https://github.com/anselm/aterrain/blob/master/public/assets/helloworld.png?raw=true" width="660">
 </a>
@@ -60,8 +68,6 @@ body { background:#f0e0e0; overflow:hidden;}
 </html>
 ```
 
-## Questions and Community
-
 ## Design approach currently chosen for connecting **Cesium** to **ThreeJS and AFrame**
 
 ### Goals
@@ -73,7 +79,7 @@ Design choices here include:
 - be ok with failing to do all the fancy stuff that Cesium does
 - focus more at street level rather than globe views
 
-In general a globe renderer uses a tile based approach to render the planet surface. There is a pyramid of tiles at different resolutions that represent the terrain elevation and separately the images that are draped on the tiles. There are also 3d-tiles to represent buildings. A rendered view consists of fetching the visible sources at a given longitude, latitude and elevation from the ground and compositing them all together into a plausible view.
+In general a globe renderer often uses a tile based approach to render the planet surface. There is a pyramid of tiles at different resolutions that represent the terrain elevation and separately the images that are draped on the tiles. There are also 3d-tiles to represent buildings. A rendered view consists of fetching the visible sources at a given longitude, latitude and elevation from the ground and compositing them all together into a plausible view.
 
 In the case of this engine it is possible to render a full globe - but the goal is more to be able to render a small piece of the earth. The use cases imagined are more focused on "near field" interactions, collisions, mixing in other aframe components, allowing activities such as exploring a city landscape on foot, or mixed reality use cases such as holding up a tablet (or wearing augmented reality glasses) and seeing a virtual world superimposed on the real world.
 
