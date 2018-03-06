@@ -12,17 +12,35 @@ body { background:#303030; overflow:hidden;}
 <script src="js/aterrain/aterrain.js"></script>
 
 <a-scene cursor="rayOrigin: mouse">
-
+  <!-- TODO avoid specifying coordinate twice -->
   <a-entity id="hello world" visible="true"
                 a-terrain="lat:45.557749; lon:-122.6794; radius:1000; elevation:263727982"
                 a-terrain-controls="lat:45.557749; lon:-122.6794; radius:1000; elevation:263727982"
             >
+
+    <!-- here is a duck spinning around on top of Portland -->
+    <a-entity a-ll="lat:45.557749; lon:-122.6794; radius:1000;">
+      <a-entity rotation="-90 0 0" scale="0.1 0.1 0.1">
+        <a-entity rotation="0 0 0">
+           <a-animation attribute="rotation"
+               dur="300"
+               fill="forwards"
+               from="0 0 0"
+               to="0 360 0"
+               repeat="indefinite"></a-animation>
+          <a-gltf-model src="assets/duck.gltf"></a-gltf-model>
+        </a-entity>
+      </a-entity>
+    </a-entity>
+
+
   </a-entity>
 
-  <a-entity id="camera" camera="fov:45" mouse-cursor position="0 0 0"></a-entity>
+  <a-entity id="camera_wrapper">
+    <a-entity id="camera" camera="fov:45" mouse-cursor position="0 0 0"></a-entity>
+  </a-entity>
 
 </a-scene>
 
-</script>
 
 

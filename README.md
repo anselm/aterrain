@@ -1,6 +1,6 @@
 # ATerrain
 
-Allows rendering of a globe or parts of a globe with elevation, images and buildings.
+Allows rendering of a globe or parts of a globe with elevation, images and buildings relying heavily on Cesium to accomplish all this.
 
 ## Examples
 
@@ -22,10 +22,10 @@ The primary expected use case is rendering bits and pieces of the world at will.
   <img alt="sanfrancisco" target="_blank" src="https://github.com/anselm/aterrain/blob/master/public/assets/sanfrancisco.png?raw=true" width="660">
 </a>
 
-Here is an example of using this tool as a simple multiplayer game:
+Here is an example of using this tool as a simple multiplayer experience:
 
-<a href="https://anselm.github.io/aterrain/public/multiplayer.html">
-  <img alt="multiplayer" target="_blank" src="https://github.com/anselm/aterrain/blob/master/public/assets/helloworld.png?raw=true" width="660">
+<a href="https://anselm.github.io/aterrain/public/game.html">
+  <img alt="multiplayer" target="_blank" src="https://github.com/anselm/aterrain/blob/master/public/assets/game.png?raw=true" width="660">
 </a>
 
 ## Features
@@ -85,7 +85,7 @@ In the case of this engine it is possible to render a full globe - but the goal 
 
 ### Cesium
 
-Cesium is a best of breed Virtual Globe with a javascript implementation. The work is complex and precise, and represents years of labor, thought and architectural framing considerations. For example see [Cesium Nasa Mars Trek](https://marstrek.jpl.nasa.gov/). For a technical perspective on the features of this globe viewer see [Cesium Presentation](https://cesium.com/presentations) and [3D Engine Design for Virtual Globes](https://www.virtualglobebook.com/). For a quick overview of concerns that affect even the implementation of this wrapper see [Under The Hood Of Virtual Globes](https://www.virtualglobebook.com/Under_the_Hood_of_Virtual_Globes.pdf).
+Cesium is a best of breed Virtual Globe with a javascript implementation. The work is complex and precise, and represents years of labor. For example see [Cesium Nasa Mars Trek](https://marstrek.jpl.nasa.gov/). For a technical perspective on the features of this globe viewer see [Cesium Presentation](https://cesium.com/presentations) and [3D Engine Design for Virtual Globes](https://www.virtualglobebook.com/). For a quick overview of concerns that affect even the implementation of this wrapper see [Under The Hood Of Virtual Globes](https://www.virtualglobebook.com/Under_the_Hood_of_Virtual_Globes.pdf).
 
 The architecture of Cesium (at a high level and skipping many details) can be seen as something like so:
 
@@ -110,7 +110,7 @@ The architecture of Cesium (at a high level and skipping many details) can be se
 
 ### ThreeJS
 
-Cesium implements a high level 3d game engine in order to render the views to WebGL. That role collides with ThreeJS and it means that the lightweight composability of using Cesium data in a different context or application is slightly hampered. Depending on a programmers expertise it isn't that hard to repurpose raw tile data, but it makes quick lightweight tests and projects less likely. If some of the power of Cesium can be exposed to threejs (and later perhaps Babylon3d) then more people can embed earth data in their applications. The goal is to use the geographic powers of Cesium but switching to ThreeJS for WebGL bindings and Math.
+Cesium implements a high level 3d game engine in order to render the views to WebGL. That role collides with ThreeJS. Depending on a programmers expertise it isn't that hard to repurpose raw tile data, but it makes quick lightweight tests and projects less likely. The goal is to use the geographic powers of Cesium but switching to ThreeJS for WebGL bindings and Math.
 
 ### Current Choices
 
@@ -136,6 +136,6 @@ The approach currently looks something like this architecturally:
 
 ## Areas for improvement ##
 
-A-TERRAIN in its current incarnation is a poor globe view. It uses Cesium and allows zooming and panning to showcase the ability to produce a globe. However it lacks all of the features of Cesium and there are unresolved issues with respect to Camera zdepth (near/far) and suchlike. As well to some degree this wrapper does more work than it should - and there is an ongoing effort to find ideal cleaving points between the two engines to see if this work can be reduced. With the help of Cesium there may also be some collaboration to push some of the features here to Cesium and thus reduce the weight on this engine. One key factor is that Cesium does much of the reprojection work with shaders, and there is a goal here to avoid shaders.
+A-TERRAIN in its current incarnation is a poor globe view. It allows zooming and panning to showcase the ability to produce a globe. However it lacks all of the features of Cesium and there are unresolved issues with respect to Camera zdepth (near/far) and suchlike. As well to some degree this wrapper does more work than it should - and there is an ongoing effort to find ideal cleaving points between the two engines to see if this work can be reduced. With the help of Cesium there may also be some collaboration to push some of the features here to Cesium and thus reduce the weight on this engine. One key factor is that Cesium does much of the reprojection work with shaders, and there is a goal here to avoid shaders.
 
 

@@ -25,7 +25,7 @@ app.use(require('method-override')());
 app.use(express.static(__dirname + '/public'));
 app.use(session({ secret: 'suchsecret', cookie: { maxAge: 60000 }, resave: false, saveUninitialized: false  }));
 
-/* not needed
+// TODO ideally don't use this approach but use sockets
 let entities = {};
 app.put("/api/save",function (req, res) {
   entities[req.body.id] = req.body;
@@ -38,7 +38,6 @@ app.get("/api/query",function(req,res) {
   console.log(entities);
   res.json(entities);
 });
-*/
 
 if (!isProduction) {
   app.use(errorhandler());
@@ -73,6 +72,7 @@ var server = app.listen(port, function(){
   console.log('Listening on port ' + server.address().port);
 });
 
+/*
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // game state
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -99,7 +99,7 @@ State.instance = function() {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // sockets gateway
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/*
+
 var io = require('socket.io')(server, {
   path: '/',
   serveClient: false,

@@ -24,8 +24,6 @@ class TileServer  {
 
     this.terrainProvider = new Cesium.CesiumTerrainProvider(this.data);
 
-    //let guder = (new URLSearchParams(window.location.search)).get("guder");
-    //this.guder = guder ? 1 : 0;
   }
 
   ready(callback) {
@@ -154,6 +152,7 @@ class TileServer  {
     return new THREE.Vector3(x,y,z);
   }
 
+  /*
   toGeometryUnusedTest(scene) {
 
     // some test code to look at how cesium was building the Gudermannian 
@@ -191,8 +190,8 @@ class TileServer  {
         console.log("lat = "+latitude+" sinlat="+sinLatitude+" mercfract=" + mercatorFraction);
       //}
     }
-
   }
+  */
 
   toGeometryIdealized(scheme) {
 
@@ -222,7 +221,6 @@ class TileServer  {
 
         let radius = scheme.radius;
         let v = this.ll2v(latrad,lonrad,radius);
-      //  console.log(v);
         geometry.vertices.push(v);
       }
     }
@@ -264,9 +262,6 @@ class TileServer  {
       let lonrad = tile._uValues[i]/32767*scheme.degrees_lonrad + scheme.rect.west;
       let latrad = tile._vValues[i]/32767*scheme.degrees_latrad + scheme.rect.south;
       let elevation = (((tile._heightValues[i]*(tile._maximumHeight-tile._minimumHeight))/32767.0)+tile._minimumHeight);
-
-      //if(this.guder) { latrad = gudermannian_radians(latrad); }
-
       let v = this.ll2v(latrad,lonrad,(earth_radius+elevation)*scheme.radius/earth_radius);
       geometry.vertices.push(v);
     }

@@ -180,8 +180,8 @@ class State {
     // TODO this is an idea of adding an observer; in my thinking here it would query for the data if it did not have it
     this.observers[name] = callback;
 
-    // TODO for now re-query over and over
-    window.setInterval(nothing => { this.query(name) }, 1000);
+    // TODO for now re-query over and over - improve with sockets
+    window.setInterval(nothing => { this.query(name) }, 50 );
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -266,20 +266,17 @@ State.instance = function() {
 /// - this code is a bit of a mess right now - refactor TODO
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
-AFRAME.registerComponent('agame-terrain', {
+AFRAME.registerComponent('a-terrain-game', {
 
   // TODO is there a way to peek at aterrain?
   schema: {
            lat: {type: 'number', default:  45.557749 },
            lon: {type: 'number', default:  -122.6794 },
      elevation: {type: 'number', default:  6372798   },
-        radius: {type: 'number', default:  100       },
+        radius: {type: 'number', default:  1000      },
   },
 
   init: function() {
-
-    // Game controls for now... inelegant - should be a separate aframe widget TODO
-    this.setup_some_game_controls();
 
     // fake a user from scratch from params for now ... later be better like have real login TODO
     let name = (new URLSearchParams(window.location.search)).get("name");
@@ -287,9 +284,6 @@ AFRAME.registerComponent('agame-terrain', {
       alert("For now make up a unique name in the url parameters such as http://somewhere?name=" + State.instance().generateUID() );
       return;
     }
-
-    this.el.emit("a-terrain:navigate", {lat:this.data.lat, lon: this.data.lon, elevation:this.data.elevation }, false);
-    return;
 
     // authenticate that user... with the state engine... now it is magically networked to all other instances too
     let user = State.instance().authenticate({name:name,password:"secret"});
@@ -306,12 +300,23 @@ AFRAME.registerComponent('agame-terrain', {
         this.data.lat = user.lat = position.coords.latitude;
         this.data.lon = user.lon = position.coords.longitude;
         State.instance().save(user);
-        // tell game to paint at least once here also
+        // tell game to go here at least once
         this.el.emit("a-terrain:navigate", {lat:this.data.lat, lon: this.data.lon, elevation:this.data.elevation }, false);
         // repaint it also - TODO this should not be needed - the server should send us state events
         this.visually_represent_one(user);
-     });
+      });
     }
+
+    // watch for movement
+    this.el.addEventListener("a-terrain:navigate", evt => {
+      let user = State.instance().user;
+      if(user) {
+        user.lat = evt.detail.lat; // TODO really lat,lon should be treated as a single concept
+        user.lon = evt.detail.lon;
+        State.instance().save(user);
+        this.visually_represent_one(user); // TODO this is not really needed because the server will update this
+      }
+    });
 
     // Watch for state changes in the database... also in this case it's going to force the server to go and sync state.
     State.instance().observe("entities",results => this.visually_represent_all(results) );
@@ -334,14 +339,12 @@ AFRAME.registerComponent('agame-terrain', {
   visually_represent_one: function(entity) {
     if(entity.element.parentNode != this.el) {
       // the state machine helps by making the element but it still has to be added to the scene
-      console.log("had to add entity to scene " + entity.id);
       this.el.appendChild(entity.element);
     }
     // update place representationally at surface
     let v = this.ll2v(entity.lat,entity.lon,this.data.radius);
     entity.element.object3D.position.set(v.x,v.y,v.z);
     entity.element.object3D.lookAt( new THREE.Vector3(0,0,0) );
-    console.log(" entity is at " + entity.id + " " + entity.lat );
   },
 
   visually_represent_all: function(entities) {
@@ -354,6 +357,7 @@ AFRAME.registerComponent('agame-terrain', {
 
 });
 
+/*
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 // game user profile page
 // tbd
@@ -388,4 +392,4 @@ AFRAME.registerComponent('agame-profile', {
   },
 
 });
-
+*/

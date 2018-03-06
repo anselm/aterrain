@@ -40,19 +40,15 @@ AFRAME.registerComponent('a-building', {
     let scheme = TileServer.instance().scheme_elaborate(data);
     GLTFLoader.load(scheme.building_url,function(gltf) {
       scope.el.setObject3D('mesh',gltf.scene);
-      // fix building scale to reflect radius here - see https://wiki.openstreetmap.org/wiki/Zoom_levels
-      // TODO scaling is so confusing to me... I had to divide by 10 for some reason???
-      let earth_radius = 6372798.2;
-      let s = data.radius/earth_radius;
+      let world_radius = TileServer.instance().getRadius() / 10; // unsure why this is TODO
+      let s = data.radius/world_radius;
       scope.el.object3D.scale.set(s,s,s);
       // fix building rotation to reflect frame of reference here (they are pre-rotated for a different frame of reference)
       scope.el.object3D.rotation.set(0,-Math.PI/2,0);
-      // fix building elevation to include sea level (they appear to already include elevation above sea level)
       // fix building longitude and latitude centering to reflect tile center
       let lat = scheme.rect.south+scheme.degrees_latrad/2;
       let lon = scheme.rect.west+scheme.degrees_lonrad/2;
-      let elevation = scheme.radius; // TODO consisting naming
-      let v = TileServer.instance().ll2v(lat,lon,elevation);
+      let v = TileServer.instance().ll2v(lat,lon,scheme.radius);
       scope.el.object3D.position.set(v.x,v.y,v.z);
     });
   }
@@ -80,39 +76,19 @@ AFRAME.registerComponent('a-tile', {
         this.el.incomplete = 0;
         // publish a general message that this tile is visible
         this.el.emit("a-tile:visible", {lat:data.lat, lon: data.lon, lod:data.lod, id:this.el.id }, false);
-        // estimate an elevation for this tile - actually this may not be the center of the tile depending on how it was created TODO
-        // TODO probably shouldn't do this at all - is it needed?
-        scheme.elevation = TileServer.instance().findClosestElevation(scheme);
         // TODO it would be nice to know better if there were buildings without triggering an error
         if(scheme.lod < 15) return;
         let building = document.createElement('a-entity');
-        // TODO shouldn't the radius be the elevation - examine
         building.setAttribute('a-building',{ lat:data.lat, lon:data.lon, lod:15, radius:data.radius });
-        // TODO also this could be parallelized - no reason to wait for the terrain
         this.el.appendChild(building);
-
-/*
-
-    // test - rotate tile to face camera
-    let obj = this.el.object3D;
-    obj.rotation.set(0,0,0);
-    var q = new THREE.Quaternion();
-    q.setFromAxisAngle( new THREE.Vector3(0,1,0), THREE.Math.degToRad(-data.lon) );
-    obj.quaternion.premultiply(q);
-    q.setFromAxisAngle( new THREE.Vector3(1,0,0), THREE.Math.degToRad(data.lat) );
-    obj.quaternion.premultiply(q);
-*/
       });
     });
-
-
   }
 });
 
 ///
 /// a-terrain
 /// manufactures a-tiles to cover an area of observed space as a sphere
-/// currently has some input controls for testing
 ///
 
 AFRAME.registerComponent('a-terrain', {
@@ -170,7 +146,7 @@ AFRAME.registerComponent('a-terrain', {
       let distance = (world_radius+groundValue+data.elevation)*data.radius/world_radius;
       // move earth surface here
       obj.position.set(0,0,-distance);
-      console.log("for elevation " + data.elevation + " the lod is " + data.lod + " and ground is at " + groundValue );
+      //console.log("for elevation " + data.elevation + " the lod is " + data.lod + " and ground is at " + groundValue );
     };
 
     // quick set to avoid delays even if stale - ground level is not known yet but waiting for it causes visible delays
@@ -374,5 +350,20 @@ AFRAME.registerComponent('a-terrain-controls', {
 });
 
 
+/*
+
+
+/*
+    let element = this.el.querySelector("#camera_wrapper");
+
+    // test - rotate tile to face camera
+    let obj = this.el.object3D;
+    obj.rotation.set(0,0,0);
+    var q = new THREE.Quaternion();
+    q.setFromAxisAngle( new THREE.Vector3(0,1,0), THREE.Math.degToRad(-data.lon) );
+    obj.quaternion.premultiply(q);
+    q.setFromAxisAngle( new THREE.Vector3(1,0,0), THREE.Math.degToRad(data.lat) );
+    obj.quaternion.premultiply(q);
+*/
 
 
