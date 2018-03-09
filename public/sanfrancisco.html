@@ -13,14 +13,25 @@ body { background:#303030; overflow:hidden;}
 
 <a-scene cursor="rayOrigin: mouse">
 
-  <a-entity id="san francisco" a-terrain="lat:45.557749; lon:-122.6794; radius:1000; elevation:263727982; "
-                      a-terrain-controls="lat:45.557749; lon:-122.6794; radius:1000; elevation:263727982"
-
-  				>
+  <a-entity id="san francisco" a-terrain="lat:45.557749; lon:-122.6794; radius:1000; elevation:263727982; target:camera">
   </a-entity>
 
-  <a-entity id="camera_wrapper">
-    <a-entity id="camera" camera="fov:45" mouse-cursor position="0 0 0"></a-entity>
+  <!-- https://github.com/tizzle/aframe-orbit-controls-component -->
+  <a-entity
+      id="camera"
+      camera="fov: 45; zoom: 1;"
+      position="0 0 5000"
+      orbit-controls="
+          autoRotate: false;
+          target: #helloworld;
+          enableDamping: true;
+          dampingFactor: 0.125;
+          rotateSpeed:0.05;
+          minDistance:1000;
+          maxDistance:5000;
+          "
+      mouse-cursor="">
+      <a-entity geometry="primitive:cone; radius-bottom:1; radius-top:0" scale=".33 1 .33" position="0 0 0" rotation="90 0 0" material="color: #0099ff; transparent: true; opacity:0.5"></a-entity>
   </a-entity>
 
 </a-scene>

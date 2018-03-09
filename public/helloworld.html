@@ -4,19 +4,21 @@ body { background:#303030; overflow:hidden;}
 </style>
 
 <script src="https://aframe.io/releases/0.7.1/aframe.min.js"></script>
+<!-- my version is modified to proportionally scale velocity as a function of distance so that close in movement is linear
+<script src="https://cdn.rawgit.com/tizzle/aframe-orbit-controls-component/v0.1.14/dist/aframe-orbit-controls-component.js"></script>
+-->
+<script src="js/aframe-orbit-controls-component.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/webpack-cesium/1.37.0/webpack.cesium.js"></script>
 <script src="js/aterrain/GLTFLoader.js"></script>
 <script src="js/aterrain/math.js"></script>
 <script src="js/aterrain/imageserver.js"></script>
 <script src="js/aterrain/tileserver.js"></script>
 <script src="js/aterrain/aterrain.js"></script>
+</head>
 
 <a-scene cursor="rayOrigin: mouse">
   <!-- TODO avoid specifying coordinate twice -->
-  <a-entity id="hello world" visible="true"
-                a-terrain="lat:45.557749; lon:-122.6794; radius:1000; elevation:263727982"
-                a-terrain-controls="lat:45.557749; lon:-122.6794; radius:1000; elevation:263727982"
-            >
+  <a-entity id="helloworld" visible="true" a-terrain="lat:45.557749; lon:-122.6794; elevation:263727982; radius:1000; observer:camera">
 
     <!-- here is a duck spinning around on top of Portland -->
     <a-entity a-ll="lat:45.557749; lon:-122.6794; radius:1000;">
@@ -36,8 +38,22 @@ body { background:#303030; overflow:hidden;}
 
   </a-entity>
 
-  <a-entity id="camera_wrapper">
-    <a-entity id="camera" camera="fov:45" mouse-cursor position="0 0 0"></a-entity>
+  <!-- https://github.com/tizzle/aframe-orbit-controls-component -->
+  <a-entity
+      id="camera"
+      camera="fov: 45; zoom: 1;"
+      position="0 0 5000"
+      orbit-controls="
+          autoRotate: false;
+          target: #helloworld;
+          enableDamping: true;
+          dampingFactor: 0.125;
+          rotateSpeed:0.05;
+          minDistance:1000;
+          maxDistance:5000;
+          "
+      mouse-cursor="">
+      <a-entity geometry="primitive:cone; radius-bottom:1; radius-top:0" scale=".33 1 .33" position="0 0 0" rotation="90 0 0" material="color: #0099ff; transparent: true; opacity:0.5"></a-entity>
   </a-entity>
 
 </a-scene>

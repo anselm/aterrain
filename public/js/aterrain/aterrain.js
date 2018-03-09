@@ -14,9 +14,17 @@ AFRAME.registerComponent('a-ll', {
   init: function() {
     let scheme = TileServer.instance().scheme_elaborate(this.data);
     let v = TileServer.instance().ll2v(scheme.latrad,scheme.lonrad,this.data.radius);
+    // TODO this approach is inelegant; it would be cleaner to apply the latitude and longitude rotations as done with rotating the world
     this.el.object3D.position.set(v.x,v.y,v.z);
-    // TODO this is kind of inelegant; it would be better to precisely rotate the entity out to this location in space - see world rotator
     this.el.object3D.lookAt( new THREE.Vector3(0,0,0) );
+
+    // This would be cleaner - would avoid the lookat which is clumsy
+    //obj.rotation.set(0,0,0);
+    //var q = new THREE.Quaternion();
+    //q.setFromAxisAngle( new THREE.Vector3(0,1,0), THREE.Math.degToRad(-data.lon) );
+    // obj.quaternion.premultiply(q);
+    //q.setFromAxisAngle( new THREE.Vector3(1,0,0), THREE.Math.degToRad(data.lat) );
+    // obj.quaternion.premultiply(q);
   },
 });
 
@@ -99,19 +107,15 @@ AFRAME.registerComponent('a-terrain', {
            lon: {type: 'number', default:    0},     // longitude
            lod: {type: 'number', default:    1},     // this is computed
      elevation: {type: 'number', default:    1},     // height above ground
+      observer: {type: 'string', default: "camera"}  // id of an observer if any
   },
 
   init: function() {
+
+    // Wait for tile engine
     TileServer.instance().ready( unused => {
       // update once prior to any events so that there is something to see even if not perfect
-      this.updateView();
-      // listen for navigation
-      this.el.addEventListener("a-terrain:navigate", evt => {
-        this.data.lat = evt.detail.lat;
-        this.data.lon = evt.detail.lon;
-        this.data.elevation = evt.detail.elevation;
-        this.updateView();
-      });
+      this.updateTiles();
       // listen to tiles being loaded for clearing backdrop
       this.el.addEventListener("a-tile:visible", evt => {
         alert(0); // WHYYYY TODO
@@ -120,52 +124,8 @@ AFRAME.registerComponent('a-terrain', {
     });
   },
 
-  updateView: function() {
-
-    let data = this.data;
-
-    // rotate the world such that the supplied lat, lon is at 0,0
-    // TODO move camera instead
-    let obj = this.el.object3D;
-    obj.rotation.set(0,0,0);
-    var q = new THREE.Quaternion();
-    q.setFromAxisAngle( new THREE.Vector3(0,1,0), THREE.Math.degToRad(-data.lon) );
-    obj.quaternion.premultiply(q);
-    q.setFromAxisAngle( new THREE.Vector3(1,0,0), THREE.Math.degToRad(data.lat) );
-    obj.quaternion.premultiply(q);
-
-    // deal with distance and tiles
-    let world_radius = TileServer.instance().getRadius();
-    let world_circumference = TileServer.instance().getCircumference();
-
-    // estimate level of detail ... 
-    data.lod = TileServer.instance().elevation2lod(data.elevation);
-
-    let move_globe = function(groundValue) {
-      // the world surface should touch the origin
-      let distance = (world_radius+groundValue+data.elevation)*data.radius/world_radius;
-      // move earth surface here
-      obj.position.set(0,0,-distance);
-      //console.log("for elevation " + data.elevation + " the lod is " + data.lod + " and ground is at " + groundValue );
-    };
-
-    // quick set to avoid delays even if stale - ground level is not known yet but waiting for it causes visible delays
-    if(data.groundLatched) {
-      move_globe(data.ground);
-    }
-
-    // get ground height (has a delay)
-    TileServer.instance().getGround(data,groundValue => {
-      if(!groundValue || groundValue <0) groundValue = 0;
-      data.ground = groundValue;
-      data.groundLatched = true;
-      move_globe(groundValue);
-    });
-
-    this.updateTiles();
-  },
-
   markTiles: function() {
+    // TODO still debating the right approach here
     // mark all tiles to age them out - tiles with an age of zero are fresh
     if(!this.elements) this.elements = [];
     this.elements.forEach(element => {
@@ -175,6 +135,7 @@ AFRAME.registerComponent('a-terrain', {
 
   sweepTiles: function() {
 
+    // TODO still debating the right approach
     // test: don't sweep till all tiles are complete - unsure if this will work because what if a tile never loads? also this list gets long...
     let dirty = 0;
     this.elements.forEach(element => {
@@ -200,17 +161,12 @@ AFRAME.registerComponent('a-terrain', {
     });
   },
 
-/*
-  update: function() {
-    this.sweepTiles();
-
-    // TODO it is arguable if updateTiles should only be called here so that mark and sweep can be choreographed - would it cause other issues?
-  },
-*/
-
   updateTiles: function() {
 
-    // mark for garbage collector
+    // re-estimate lod
+    this.data.lod = TileServer.instance().elevation2lod(this.data.elevation);
+
+    // mark all tiles for garbage collector
     this.markTiles();
 
     // test - just fetch one tile - unused
@@ -264,106 +220,53 @@ AFRAME.registerComponent('a-terrain', {
     element.marked = 0;
   },
 
-});
-
-///
-/// camera control for the globe
-///
-
-AFRAME.registerComponent('a-terrain-controls', {
-
-  schema: {
-           lat: {type: 'number', default:  45.557749 },
-           lon: {type: 'number', default:  -122.6794 },
-     elevation: {type: 'number', default:  6372798   },
-        radius: {type: 'number', default:  1000       },
+  tick: function() {
+    this.updateView();
   },
 
-  init: function () {
-    this.setup_some_game_controls();
-  },
 
-  setup_some_game_controls: function() {
+  ///
+  /// Generate surface tiles to provide a consistent view from the viewpoint of the supplied target or camera
+  ///
 
-    let dragging = 0;
-    let dragstartx = 0;
-    let dragstarty = 0;
-    let dragstartlon = 0;
-    let dragstartlat = 0;
+  updateView: function() {
 
+    // Find observer again every frame since it may change or just return
+    let observer = this.el.sceneEl.querySelector("#"+this.data.observer);
+    if(!observer) {
+      return;
+    }
+
+    // Exit if no change
+    if(this.observer_position && observer.object3D.position.equals(this.observer_position)) {
+      return;
+    }
+    this.observer_position = observer.object3D.position.clone();
+
+    // How far is the target from the globe in the model distance?
+    let model_distance = this.el.object3D.position.distanceTo( this.observer_position );
+
+    // The observer does not know how high above the ellipsoid the current terrain elevation is - pick a number for now TODO ponder
+    let ground_value = 500;
+
+    // Right now we know the world radius ... code could be refactored to not need to know this TODO
     let world_radius = TileServer.instance().getRadius();
-    let world_circumference = TileServer.instance().getCircumference();
 
-    // allow click drag navigation around the globe
-    window.addEventListener("mousedown", e => { dragging = 1; e.preventDefault(); });
-    window.addEventListener("mouseup", e => { dragging = 0; e.preventDefault(); });
-    window.addEventListener("mousemove", e => {
-      if(dragging == 0) return;
-      if(dragging == 1) {
-        dragging = 2;
-        dragstartx = e.clientX;
-        dragstarty = e.clientY;
-        dragstartlon = this.data.lon;
-        dragstartlat = this.data.lat;
-      }
-      let x = e.clientX - dragstartx;
-      let y = e.clientY - dragstarty;
+    // Given a model distance in model coordinates obtain an elevation in world coordinates;
+    this.data.elevation = model_distance * world_radius / this.data.radius - world_radius + ground_value;
 
-      // roughly scale movement speed by current distance from surface
-      this.data.lon = dragstartlon - x * this.data.elevation / world_circumference / 2;
-      this.data.lat = dragstartlat + y * this.data.elevation / world_circumference / 2;
+    // Recover latitude and longitude from observer
 
-      // not critical but tidy up legal orientations
-      if(this.data.lat > 80) this.data.lat = 80;
-      if(this.data.lat < -80) this.data.lat = -80;
-      if(this.data.lon < -180) this.data.lon += 360;
-      if(this.data.lon > 180) this.data.lon -= 360;
+    this.data.lat = -observer.object3D.rotation.x * RADIANS_TO_DEGREES;
+    this.data.lon = observer.object3D.rotation.y * RADIANS_TO_DEGREES;
 
-      // Tell the terrain
-      this.el.emit("a-terrain:navigate", {lat:this.data.lat, lon: this.data.lon, elevation:this.data.elevation }, false);
+    // TODO mercator is giving us some trouble here - examine more later - constrain for now
+    if(this.data.lat > 85) this.data.lat = 85;
+    if(this.data.lat < -85) this.data.lat = -85;
 
-      e.preventDefault();
-    });
-
-    // zooming 
-    window.addEventListener("wheel",e => {
-
-      // throw away the speed (which is varys by browser anyway) and just get the direction
-      const direction = Math.max(-1, Math.min(1, e.deltaY));
-
-      // zoom in/out - roughly scaled by current elevation
-      this.data.elevation += this.data.elevation * direction * 0.1;
-
-      // limits
-      if(this.data.elevation > world_circumference) this.data.elevation = world_circumference;
-
-      // set near limit to 1 meter
-      if(this.data.elevation < 3500) this.data.elevation = 3500;
-
-      // tell the terrain engine about this
-      this.el.emit("a-terrain:navigate", {lat:this.data.lat, lon: this.data.lon, elevation:this.data.elevation }, false);
-
-      e.preventDefault();
-    });
-  }
+    // Generate appropriate tiles for this distance
+    this.updateTiles();
+  },
 
 });
-
-
-/*
-
-
-/*
-    let element = this.el.querySelector("#camera_wrapper");
-
-    // test - rotate tile to face camera
-    let obj = this.el.object3D;
-    obj.rotation.set(0,0,0);
-    var q = new THREE.Quaternion();
-    q.setFromAxisAngle( new THREE.Vector3(0,1,0), THREE.Math.degToRad(-data.lon) );
-    obj.quaternion.premultiply(q);
-    q.setFromAxisAngle( new THREE.Vector3(1,0,0), THREE.Math.degToRad(data.lat) );
-    obj.quaternion.premultiply(q);
-*/
-
 
