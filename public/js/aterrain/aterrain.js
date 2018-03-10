@@ -188,9 +188,9 @@ AFRAME.registerComponent('a-terrain', {
         let scratch = { lat:this.data.lat + scheme.degrees_lat * i, lon:this.data.lon + scheme.degrees_lon * j, lod:this.data.lod, radius:this.data.radius };
         // hack terrible code TODO cough forever loop
         while(scratch.lon < -180) scratch.lon += 360;
-        while(scratch.lon > 180) scratch.lon -= 360;
+        while(scratch.lon >= 180) scratch.lon -= 360;
         while(scratch.lat < -90) scratch.lat += 180;
-        while(scratch.lat > 90) scratch.lat -= 180;
+        while(scratch.lat >= 90) scratch.lat -= 180;
         // make tile
         this.updateTile(scratch);
       }

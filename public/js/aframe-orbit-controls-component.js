@@ -142,6 +142,10 @@
 	    autoVRLookCam: {
 	      type: 'boolean',
 	      default: true
+	    },
+	    enableProportionalVelocity: {
+	      type: 'boolean',
+	      default: true
 	    }
 	  },
 
@@ -637,11 +641,17 @@
 
 	    var canvas = this.canvasEl === document ? this.canvasEl.body : this.canvasEl;
 
+	    // rotate less if closer
+	    let ratio = 1;
+	    if(this.data.enableProportionalVelocity) {
+	      ratio = (this.spherical.radius-this.data.minDistance) / (this.data.maxDistance-this.data.minDistance);
+		}
+
 	    // rotating across whole screen goes 360 degrees around
-	    this.rotateLeft(2 * Math.PI * this.rotateDelta.x / canvas.clientWidth * this.data.rotateSpeed);
+	    this.rotateLeft(2 * Math.PI * this.rotateDelta.x / canvas.clientWidth * this.data.rotateSpeed * ratio);
 
 	    // rotating up and down along whole screen attempts to go 360, but limited to 180
-	    this.rotateUp(2 * Math.PI * this.rotateDelta.y / canvas.clientHeight * this.data.rotateSpeed);
+	    this.rotateUp(2 * Math.PI * this.rotateDelta.y / canvas.clientHeight * this.data.rotateSpeed * ratio);
 
 	    this.rotateStart.copy(this.rotateEnd);
 
@@ -737,10 +747,17 @@
 	    this.rotateDelta.subVectors(this.rotateEnd, this.rotateStart);
 
 	    var canvas = this.canvasEl === document ? this.canvasEl.body : this.canvasEl;
+
+	    // rotate less if closer
+	    let ratio = 1;
+	    if(this.data.enableProportionalVelocity) {
+	      ratio = (this.spherical.radius-this.data.minDistance) / (this.data.maxDistance-this.data.minDistance);
+		}
+
 	    // rotating across whole screen goes 360 degrees around
-	    this.rotateLeft(2 * Math.PI * this.rotateDelta.x / canvas.clientWidth * this.data.rotateSpeed);
+	    this.rotateLeft(2 * Math.PI * this.rotateDelta.x / canvas.clientWidth * this.data.rotateSpeed * ratio);
 	    // rotating up and down along whole screen attempts to go 360, but limited to 180
-	    this.rotateUp(2 * Math.PI * this.rotateDelta.y / canvas.clientHeight * this.data.rotateSpeed);
+	    this.rotateUp(2 * Math.PI * this.rotateDelta.y / canvas.clientHeight * this.data.rotateSpeed * ratio);
 	    this.rotateStart.copy(this.rotateEnd);
 	    this.updateView();
 	  },
@@ -817,11 +834,14 @@
 	  getZoomScale: function () {
 
 	   	// deviation from 1 is the degree of zoom - a constant - we need something more flexible.
-	   	//let speed = Math.pow(0.95, this.data.zoomSpeed);
-
-	   	// 0.9 = deviation from zoom at far, and 1 = deviation from zoom at near - with a strong bias to be near 1.0 in general
-	    let speed = (this.data.maxDistance*10-this.spherical.radius) / (this.data.maxDistance*10-this.data.minDistance);
-		return speed;
+	   	if(!this.data.enableProportionalVelocity) {
+	   	  let speed = Math.pow(0.95, this.data.zoomSpeed);
+	   	  return speed;
+	   	} else {
+	   	  // 0.9 = deviation from zoom at far, and 1 = deviation from zoom at near - with a strong bias to be near 1.0 in general
+	      let speed = (this.data.maxDistance*10-this.spherical.radius) / (this.data.maxDistance*10-this.data.minDistance);
+		  return speed;
+		}
 
 	  },
 

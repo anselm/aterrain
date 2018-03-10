@@ -38,7 +38,7 @@ body { background:#303030; overflow:hidden;}
 
   </a-entity>
 
-  <!-- https://github.com/tizzle/aframe-orbit-controls-component -->
+  <!-- https://github.com/tizzle/aframe-orbit-controls-component -> this has been modified locally for now -->
   <a-entity
       id="camera"
       camera="fov: 45; zoom: 1;"
@@ -48,11 +48,13 @@ body { background:#303030; overflow:hidden;}
           target: #helloworld;
           enableDamping: true;
           dampingFactor: 0.125;
-          rotateSpeed:0.05;
+          rotateSpeed:0.10;
           minDistance:1000;
           maxDistance:5000;
-          "
-      mouse-cursor="">
+          minPolarAngle:0.1;
+          maxPolarAngle:3.04159265359;
+          enableProportionalVelocity:true;
+          ">
       <a-entity geometry="primitive:cone; radius-bottom:1; radius-top:0" scale=".33 1 .33" position="0 0 0" rotation="90 0 0" material="color: #0099ff; transparent: true; opacity:0.5"></a-entity>
   </a-entity>
 
