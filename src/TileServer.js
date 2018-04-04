@@ -1,24 +1,24 @@
 
+import ImageServer from './ImageServer.js';
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///
-/// TileServer is intended to be a prototypical elevation tile provider - by default for Cesium tiles
+/// TileServer is intended to be a prototypical elevation tile provider - it wraps Cesium tiles
+/// The philosophy here is that if you want to implement a different data source then you write a separate class.
 /// TODO change this to an aframe-system
-///
-////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// TODO ellipsoid is spherical and should be oblate
 
 class TileServer  {
  
   constructor() {
 
-    // looks like terrain is not in mercator -> https://cesiumjs.org/releases/1.2/Build/Documentation/GeographicTilingScheme.html
+    // cesium terrain is not in mercator -> https://cesiumjs.org/releases/1.2/Build/Documentation/GeographicTilingScheme.html
 
     this.data = {};
     this.data.ellipsoid = new Cesium.Ellipsoid(1,1,1);
     this.data.requestVertexNormals = true;
     this.data.url = "https://assets.agi.com/stk-terrain/v1/tilesets/world/tiles";
 
-    // there seem to be more missing tiles here - don't use this source for now?
+    // TODO study -> there seem to be more missing tiles here - don't use this source for now?
     //this.data.CesiumionAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYmI0ZmY0My1hOTg5LTQzNWEtYWRjNy1kYzYzNTM5ZjYyZDciLCJpZCI6NjksImFzc2V0cyI6WzM3MDQsMzcwMywzNjk5LDM2OTNdLCJpYXQiOjE1MTY4MzA4ODZ9.kM-JnlG-00e7S_9fqS_QpXYTg7y5-cIEcZEgxKwRt5E';
     //this.data.url = 'https://beta.cesium.com/api/assets/3699?access_token=' + this.data.CesiumionAccessToken;
 
@@ -312,3 +312,8 @@ TileServer.instance = function() {
   TileServer.tileServer = new TileServer();
   return TileServer.tileServer;
 };
+
+// es6 glue
+
+export default TileServer;
+

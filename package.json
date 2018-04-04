@@ -1,41 +1,89 @@
 {
-  "name": "agame",
-  "version": "1.0.0",
-  "description": "a-game using a-frame and a-terrain",
-  "main": "tiny-web-server.js",
+  "name": "aframe-aterrain-component",
+  "version": "0.1.0",
+  "description": "A 3d geographic map component for AFrame that uses Cesium data.",
+  "unused_main": "dist/aframe-terrain-component.js",
+  "unused_unpkg": "dist/aframe-aterrain-component.min.js",
   "scripts": {
-    "start": "node ./server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "unused_dev": "budo src/all.js:dist/aframe-aterrain-component.min.js --port 7000 --live --open",
+    "unused_rollup": "rollup src/all.js --output.format umd --name 'aframe-aterrain-component' --output.file dist/aframe-aterrain-component.js",
+    "unused_error_with_multi": "npx webpack --mode development src/all.js dist/aframe-aterrain-component.js",
+    "bundle": "npx webpack",
+    "compress": "uglifyjs dist/aframe-aterrain-component.js > dist/aframe-aterrain-component.min.js",
+    "build": "npm run bundle && npm run compress",
+    "dist": "npm run bundle && npm run compress",
+    "lint": "semistandard -v | snazzy",
+    "ghpages": "ghpages",
+    "start": "npm run dev",
+    "test": "karma start ./tests/karma.conf.js",
+    "test:firefox": "karma start ./tests/karma.conf.js --browsers Firefox",
+    "test:chrome": "karma start ./tests/karma.conf.js --browsers Chrome"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/anselm/aterrain_game.git"
+    "url": "git+https://github.com/anselm/aterrain.git"
   },
-  "author": "Anselm Hook",
-  "license": "ISC",
+  "keywords": [
+    "aframe",
+    "aframe-component",
+    "aframe-vr",
+    "vr",
+    "mozvr",
+    "webvr",
+    "aterrain",
+    "geography",
+    "cartography",
+    "cesium",
+    "globe",
+    "map"
+  ],
+  "author": "anselm@hook.org",
+  "license": "MIT",
   "bugs": {
-    "url": "https://github.com/anselm/aterrain_game/issues"
+    "url": "https://github.com/anselm/aterrain/issues"
   },
-  "homepage": "https://github.com/anselm/aterrain_game#readme",
-  "dependencies": {
-    "body-parser": "1.18.2",
-    "cors": "2.8.4",
-    "ejs": "2.5.7",
-    "errorhandler": "1.5.0",
-    "express": "4.16.2",
-    "express-jwt": "5.3.0",
-    "express-session": "1.15.6",
-    "jsonwebtoken": "8.1.1",
-    "method-override": "2.3.10",
-    "methods": "1.1.2",
-    "morgan": "1.9.0",
-    "passport": "0.4.0",
-    "passport-local": "1.0.0",
-    "request": "2.83.0",
-    "slug": "0.9.1",
-    "underscore": "1.8.3"
-  },
+  "homepage": "https://github.com/anselm/aterrain#readme",
   "devDependencies": {
-    "nodemon": "^1.11.0"
+    "aframe": "^0.8.1",
+    "browserify": "^13.0.0",
+    "budo": "^8.2.2",
+    "chai": "^3.4.1",
+    "chai-shallow-deep-equal": "^1.3.0",
+    "ghpages": "^0.0.8",
+    "karma": "^0.13.15",
+    "karma-browserify": "^4.4.2",
+    "karma-chai-shallow-deep-equal": "0.0.4",
+    "karma-chrome-launcher": "2.0.0",
+    "karma-env-preprocessor": "^0.1.1",
+    "karma-firefox-launcher": "^0.1.7",
+    "karma-mocha": "^0.2.1",
+    "karma-mocha-reporter": "^1.1.3",
+    "karma-sinon-chai": "^1.1.0",
+    "mocha": "^2.3.4",
+    "randomcolor": "^0.4.4",
+    "semistandard": "^8.0.0",
+    "shelljs": "^0.7.0",
+    "shx": "^0.1.1",
+    "sinon": "^1.17.5",
+    "sinon-chai": "^2.8.0",
+    "snazzy": "^4.0.0",
+    "uglify-es": "github:mishoo/UglifyJS2#harmony",
+    "uglifyjs-webpack-plugin": "^1.2.4",
+    "webpack": "^4.4.1",
+    "webpack-cli": "^2.0.13"
+  },
+  "semistandard": {
+    "globals": [
+      "AFRAME",
+      "THREE"
+    ],
+    "ignore": [
+      "dist/**"
+    ]
+  },
+  "dependencies": {
+    "rollup": "^0.57.1",
+    "three": "^0.91.0",
+    "uglify-js": "^3.3.18"
   }
 }

@@ -1,9 +1,9 @@
+/*
 
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-// math helpers
-// TODO perhaps put this somewhere cleaner later
-////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// math helpers
+/// TODO perhaps put this somewhere cleaner later
+/// TODO unused - roll into a base class that TileServer can use perhaps?
+///
 
 // https://en.wikipedia.org/wiki/Gudermannian_function
 // http://aperturetiles.com/docs/development/api/jsdocs/binning_WebMercatorTilePyramid.js.html
@@ -17,7 +17,6 @@ var RADIANS_TO_DEGREES = 180.0 / Math.PI; // Factor for changing radians to degr
 let pi2deg = function(v) { return v*RADIANS_TO_DEGREES; }
 let deg2pi = function(v) { return v*DEGREES_TO_RADIANS; }
 
-/*
 function sinh( arg ) {
   return (Math.exp(arg) - Math.exp(-arg)) / 2.0;
 }

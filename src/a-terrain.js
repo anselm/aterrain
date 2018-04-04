@@ -1,102 +1,14 @@
 
-///
-/// A-ll
-/// If this is inside an a-terrain then the child will be on the surface at the specified latitude and longitude
-/// TODO should peek at the parent to find the radius rather than hard coded
-///
+if (typeof AFRAME === 'undefined') {
+  throw new Error('Component attempted to register before AFRAME was available.');
+}
 
-AFRAME.registerComponent('a-ll', {
-  schema: {
-       lat: {type: 'number', default:  0},
-       lon: {type: 'number', default:  0},
-    radius: {type: 'number', default:  1},
-  },
-  init: function() {
-    let scheme = TileServer.instance().scheme_elaborate(this.data);
-    let v = TileServer.instance().ll2v(scheme.latrad,scheme.lonrad,this.data.radius);
-    // TODO this approach is inelegant; it would be cleaner to apply the latitude and longitude rotations as done with rotating the world
-    this.el.object3D.position.set(v.x,v.y,v.z);
-    this.el.object3D.lookAt( new THREE.Vector3(0,0,0) );
-
-    // This would be cleaner - would avoid the lookat which is clumsy
-    //obj.rotation.set(0,0,0);
-    //var q = new THREE.Quaternion();
-    //q.setFromAxisAngle( new THREE.Vector3(0,1,0), THREE.Math.degToRad(-data.lon) );
-    // obj.quaternion.premultiply(q);
-    //q.setFromAxisAngle( new THREE.Vector3(1,0,0), THREE.Math.degToRad(data.lat) );
-    // obj.quaternion.premultiply(q);
-  },
-});
-
-///
-/// a-building
-/// wrap cesium 3d tiles and adjust position and size
-///
-
-let GLTFLoader = new THREE.GLTFLoader();
-
-AFRAME.registerComponent('a-building', {
-  schema: {
-       lat: {type: 'number', default: 0},
-       lon: {type: 'number', default: 0},
-       lod: {type: 'number', default: 0},
-    radius: {type: 'number', default: 1},
-  },
-  init: function () {
-    let scope = this;
-    let data = scope.data;
-    let scheme = TileServer.instance().scheme_elaborate(data);
-    GLTFLoader.load(scheme.building_url,function(gltf) {
-      scope.el.setObject3D('mesh',gltf.scene);
-      let world_radius = TileServer.instance().getRadius() / 10; // unsure why this is TODO
-      let s = data.radius/world_radius;
-      scope.el.object3D.scale.set(s,s,s);
-      // fix building rotation to reflect frame of reference here (they are pre-rotated for a different frame of reference)
-      scope.el.object3D.rotation.set(0,-Math.PI/2,0);
-      // fix building longitude and latitude centering to reflect tile center
-      let lat = scheme.rect.south+scheme.degrees_latrad/2;
-      let lon = scheme.rect.west+scheme.degrees_lonrad/2;
-      let v = TileServer.instance().ll2v(lat,lon,scheme.radius);
-      scope.el.object3D.position.set(v.x,v.y,v.z);
-    });
-  }
-});
-
-///
-/// a-tile
-/// A single tile as specified by the tileServer abstraction
-///
-
-AFRAME.registerComponent('a-tile', {
-  schema: {
-       lat: {type: 'number', default: 0},
-       lon: {type: 'number', default: 0},
-       lod: {type: 'number', default: 0},
-    radius: {type: 'number', default: 1},
-  },
-  init: function () {
-    let data = this.data;
-    TileServer.instance().ready( unused => {
-      TileServer.instance().produceTile(data,scheme => {
-        // show tile
-        this.el.setObject3D('mesh',scheme.mesh);
-        // mark as complete
-        this.el.incomplete = 0;
-        // publish a general message that this tile is visible
-        this.el.emit("a-tile:visible", {lat:data.lat, lon: data.lon, lod:data.lod, id:this.el.id }, false);
-        // TODO it would be nice to know better if there were buildings without triggering an error
-        if(scheme.lod < 15) return;
-        let building = document.createElement('a-entity');
-        building.setAttribute('a-building',{ lat:data.lat, lon:data.lon, lod:15, radius:data.radius });
-        this.el.appendChild(building);
-      });
-    });
-  }
-});
+import TileServer from './TileServer.js';
 
 ///
 /// a-terrain
-/// manufactures a-tiles to cover an area of observed space as a sphere
+///
+/// manufactures a-tile instances to cover an area of observed space as a sphere
 ///
 
 AFRAME.registerComponent('a-terrain', {
@@ -105,11 +17,46 @@ AFRAME.registerComponent('a-terrain', {
         radius: {type: 'number', default:    1},     // radius of the world in game space
            lat: {type: 'number', default:    0},     // latitude - where to center the world and where to fetch tiles from therefore
            lon: {type: 'number', default:    0},     // longitude
-           lod: {type: 'number', default:    1},     // this is computed
+           lod: {type: 'number', default:    1},     // this is computed but left here since having a separate parent bucket/schema is a hassle
      elevation: {type: 'number', default:    1},     // height above ground
       observer: {type: 'string', default: "camera"}  // id of an observer if any
   },
 
+  ///
+  /// This component may be instanced more than once.
+  /// TODO data is conserved between instances but the back end server must be the same for all instances right now.
+  /// 
+  multiple: true,
+
+  ///
+  /// TBD
+  /// 
+  /// remove: function () { },
+
+  ///
+  /// TBD
+  ///
+  /// update: function (oldData) { },
+
+  ///
+  /// TBD
+  ///
+  /// tick: function (t) { },
+
+  ///
+  /// TBD
+  /// 
+  /// pause: function () { },
+
+  ///
+  /// TBD
+  ///
+  /// play: function () { },
+
+
+  ///
+  /// Init
+  ///
   init: function() {
 
     // Wait for tile engine
@@ -138,13 +85,12 @@ AFRAME.registerComponent('a-terrain', {
     // TODO still debating the right approach
     // test: don't sweep till all tiles are complete - unsure if this will work because what if a tile never loads? also this list gets long...
     let dirty = 0;
+    if(!this.elements) return;
     this.elements.forEach(element => {
       if(element.incomplete) dirty++;
     });
 
     if(dirty) return;
-
-    //console.log("==============");
 
     // sweep all old tiles
     // TODO this should happen again after the system settles 
@@ -196,7 +142,7 @@ AFRAME.registerComponent('a-terrain', {
       }
     }
 
-    this.sweepTiles();
+    // this.sweepTiles();
   },
 
   updateTile: function(data) {
@@ -215,7 +161,7 @@ AFRAME.registerComponent('a-terrain', {
       element.setAttribute('id',uuid);
       element.setAttribute('a-tile',{lat:data.lat,lon:data.lon,lod:data.lod,radius:data.radius});
       this.el.appendChild(element);
-      this.elements.push(element);
+      if(this.elements)this.elements.push(element);
     }
     element.marked = 0;
   },
@@ -223,7 +169,6 @@ AFRAME.registerComponent('a-terrain', {
   tick: function() {
     this.updateView();
   },
-
 
   ///
   /// Generate surface tiles to provide a consistent view from the viewpoint of the supplied target or camera
@@ -257,8 +202,8 @@ AFRAME.registerComponent('a-terrain', {
 
     // Recover latitude and longitude from observer
 
-    this.data.lat = -observer.object3D.rotation.x * RADIANS_TO_DEGREES;
-    this.data.lon = observer.object3D.rotation.y * RADIANS_TO_DEGREES;
+    this.data.lat = -observer.object3D.rotation.x * 180.0 / Math.PI;
+    this.data.lon = observer.object3D.rotation.y * 180.0 / Math.PI;
 
     // TODO mercator is giving us some trouble here - examine more later - constrain for now
     if(this.data.lat > 85) this.data.lat = 85;
