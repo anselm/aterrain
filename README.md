@@ -12,19 +12,19 @@ For [A-Frame](https://aframe.io).
 Although ATerrain isn't meant to be used as a globe renderer (because much more work would be required) it does have some support for globe rendering. Here's an example of that.
 
 <a href="https://anselm.github.io/aterrain/public/helloworld.html">
-  <img alt="helloworld" target="_blank" src="https://github.com/anselm/aterrain/blob/master/public/assets/helloworld.png?raw=true" width="660">
+  <img alt="helloworld" target="_blank" src="https://github.com/anselm/aterrain/blob/master/examples/assets/helloworld.png?raw=true" width="660">
 </a>
 
 The primary expected use case is rendering bits and pieces of the world at will. We have data available only for San Francisco right now, and here is an example of that:
 
 <a href="https://anselm.github.io/aterrain/public/sanfrancisco.html">
-  <img alt="sanfrancisco" target="_blank" src="https://github.com/anselm/aterrain/blob/master/public/assets/sanfrancisco.png?raw=true" width="660">
+  <img alt="sanfrancisco" target="_blank" src="https://github.com/anselm/aterrain/blob/master/examples/assets/sanfrancisco.png?raw=true" width="660">
 </a>
 
 Here is an example of using this tool as a simple multiplayer experience. Pick a name for yourself with the ?name=yourname parameter and it will give you an unique avatar on the globe. ( to run this you have to enable mixed http/https traffic since github serves the content with https and my own server which hosts the network does not - see <a href="https://kb.iu.edu/d/bdny">Allowing mixed content</a> and <a href="https://stackoverflow.com/questions/18321032/how-to-get-chrome-to-allow-mixed-content">https://stackoverflow.com/questions/18321032/how-to-get-chrome-to-allow-mixed-content</a>):
 
 <a href="https://anselm.github.io/aterrain/public/game.html?name=yourname">
-  <img alt="multiplayer" target="_blank" src="https://github.com/anselm/aterrain/blob/master/public/assets/game.png?raw=true" width="660">
+  <img alt="multiplayer" target="_blank" src="https://github.com/anselm/aterrain/blob/master/examples/assets/game.png?raw=true" width="660">
 </a>
 
 ### Installation
