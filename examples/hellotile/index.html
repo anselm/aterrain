@@ -1,9 +1,9 @@
 
 <!-- scripts -->
 <script src="https://aframe.io/releases/0.7.1/aframe.min.js"></script>
-<script src="https://unpkg.com/aframe-camera-transform-controls-component/dist/aframe-camera-transform-controls-component.min.js"></script>
+<script src="https://raw.githubusercontent.com/fernandojsg/aframe-camera-transform-controls-component/master/dist/aframe-camera-transform-controls-component.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/webpack-cesium/1.37.0/webpack.cesium.js"></script>
-<script src="../dist/aframe-aterrain-component.js"></script>
+<script src="../../dist/aframe-aterrain-component.js"></script>
 
 <!-- style -->
 <style>
@@ -18,7 +18,10 @@ body { background:#303030; overflow:hidden;}
 
 <a-sphere position="0 0 0" wireframe="true" radius="900" color="#EF2D5E"></a-sphere>
 
-<a-entity id="cameraRig" camera="fov: 45; zoom: 1; near:1; far:10000" position="0 0 5000">
+<a-entity id="cameraRig">
+  <a-entity id="camera" camera="fov:45; zoom:1; near:1; far:6000;" position="0 0 5000" wasd-controls look-controls orbit-controls></a-entity>
+  <a-entity id="lefthand" camera-transform-controls-hand="hand:left" vive-controls="hand: left" oculus-touch-controls="hand: left" windows-motion-controls="hand: left"></a-entity>
+  <a-entity id="righthand" camera-transform-controls-hand="hand:right" vive-controls="hand: right" oculus-touch-controls="hand: right" windows-motion-controls="hand: right"></a-entity>
 </a-entity>
 
 </a-scene>

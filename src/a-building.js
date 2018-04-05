@@ -22,7 +22,7 @@ AFRAME.registerComponent('a-building', {
     radius: {type: 'number', default: 1},
   },
   init: function () {
-    let GLTFLoader = new THREE.GLTFLoader();
+    let GLTFLoader = new AFRAME.THREE.GLTFLoader();
     let scope = this;
     let data = scope.data;
     let scheme = TileServer.instance().scheme_elaborate(data);
