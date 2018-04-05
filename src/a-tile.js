@@ -21,7 +21,6 @@ AFRAME.registerComponent('a-tile', {
     let data = this.data;
     TileServer.instance().ready( unused => {
       TileServer.instance().produceTile(data,scheme => {
-console.error("making tile");
         // show tile
         this.el.setObject3D('mesh',scheme.mesh);
         // mark as complete
