@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Example Scene</title>
+    <script src="https://aframe.io/releases/0.7.1/aframe.min.js"></script>
+    <script src="https://fernandojsg.github.io/aframe-camera-transform-controls-component/dist/aframe-camera-transform-controls-component.min.js"></script>
+    <script src="https://unpkg.com/aframe-environment-component@1.0.0/dist/aframe-environment-component.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/webpack-cesium/1.37.0/webpack.cesium.js"></script>
+    <script src="https://anselm.github.io/aterrain/dist/aframe-aterrain-component.js"></script>
+
+    </head>
+    <body>
+
+    <a-scene camera-transform-controls>
+
+        <a-assets>
+            <a-mixin id="blue" material="color: #4CC3D9"></a-mixin>
+            <a-mixin id="blueBox" geometry="primitive: box; depth: 2; height: 5; width: 1" material="color: #4CC3D9"></a-mixin>
+            <a-mixin id="box" geometry="primitive: box; depth: 1; height: 1; width: 1"></a-mixin>
+            <a-mixin id="cylinder" geometry="primitive: cylinder; height: 0.3; radius: 0.75; segmentsRadial: 6"></a-mixin>
+            <a-mixin id="green" material="color: #7BC8A4"></a-mixin>
+            <a-mixin id="orange" material="color: #F16745"></a-mixin>
+            <a-mixin id="purple" material="color: #93648D"></a-mixin>
+            <a-mixin id="short" scale="1 0.5 1"></a-mixin>
+            <a-mixin id="yellow" material="color: #FFC65D"></a-mixin>
+            <img id="crateImg" src="https://aframe.io/sample-assets/assets/images/wood/crate.gif" crossOrigin="true">
+            <img id="floorImg" src="https://aframe.io/sample-assets/assets/images/terrain/grasslight-big.jpg" crossOrigin="true">
+        </a-assets>
+
+
+<a-entity id="world" visible="true" a-terrain="observer:cameraRig; lat:45.557749; lon:-122.6794; elevation:263727982; radius:100; observer:camera">
+</a-entity>
+
+<a-sphere position="0 0 0" wireframe="true" radius="90" color="#EF2D5E"></a-sphere>
+
+<a-entity light="type: directional; color: #EEE; intensity: 1.5" position="-1 1 0"></a-entity>
+
+
+        <a-entity id="cameraRig">
+            <!-- camera -->
+            <a-entity id="camera" camera="fov:45;near:0.001;far:6000" position="0 10 500" wasd-controls look-controls orbit-controls></a-entity>
+            <a-entity id="lefthand" camera-transform-controls-hand="hand:left" vive-controls="hand: left" oculus-touch-controls="hand: left" windows-motion-controls="hand: left"></a-entity>
+            <a-entity id="righthand" camera-transform-controls-hand="hand:right" vive-controls="hand: right" oculus-touch-controls="hand: right" windows-motion-controls="hand: right"></a-entity>
+        </a-entity>
+
+        <a-entity id="environment" environment="preset: forest; fog: false"></a-entity>
+
+        <!-- Meshes. -->
+        <a-entity id="blueBox" mixin="blueBox" position="0 8 0"></a-entity>
+        <a-entity id="shortOrangeBox" mixin="short orange box" position="-5 2 0"></a-entity>
+        <a-entity id="shortYellowBox" mixin="short yellow box" position="5 2 0"></a-entity>
+        <a-entity id="redBox" geometry="primitive: box" material="color:#f00" position="-4 1 0">
+            <a-animation attribute="rotation" to="0 360 0" repeat="indefinite" easing="linear" dur="9600"></a-animation>
+        </a-entity>
+        <a-entity id="yellowSphere" geometry="primitive: sphere" material="color:#ff0; metalness:0.0; roughness:1.0" position="-2 2 -2"></a-entity>
+        <a-box src="https://aframe.io/sample-assets/assets/images/bricks/brick_bump.jpg" position="-5 5 -2" width="1" color="#F16745"></a-box>
+        <a-box id="box" position="0 2 0" height="2" color="#FFC65D"></a-box>
+
+        <!-- Models. -->
+        <a-entity class="boxClass" geometry="primitive: box" material="src: #crateImg" position="3 4 0"></a-entity>
+        <a-entity class="boxClass" geometry="primitive: box" material="color: #0f0" position="4 2 4"></a-entity>
+
+        <!-- Floor. -->
+        <a-entity id="floor" geometry="primitive: box; height: .2; depth: 24; width: 24"
+                    material="src: #floorImg; color: #fafafa; metalness: .1; repeat: 50 20; roughness: 1"></a-entity>
+
+        <!-- Lights. -->
+        <a-entity id="pointLight" light="type: point; intensity: 0.25" position="0 3 3"></a-entity>
+    </a-scene>
+    </body>
+</html>
