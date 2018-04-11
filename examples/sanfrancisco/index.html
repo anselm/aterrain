@@ -1,7 +1,6 @@
 
 <!-- scripts -->
 <script src="https://aframe.io/releases/0.7.1/aframe.min.js"></script>
-<script src="../js/aframe-camera-transform-controls-component.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/webpack-cesium/1.37.0/webpack.cesium.js"></script>
 <script src="../../dist/aframe-aterrain-component.js"></script>
 
@@ -9,15 +8,19 @@
 body { background:#303030; overflow:hidden;}
 </style>
 
-<a-scene camera-transform-controls="">
+<a-scene cursor="rayOrigin: mouse">
 
-<a-entity id="world" visible="true" a-terrain="observer:camera; lat:45.557749; lon:-122.6794; elevation:10000; radius:63727982; observer:camera">
+<a-entity light="type: directional; color: #EED; intensity: 3.5" position="-1 0.5 0"></a-entity>
+
+<a-entity id="world" visible="true" a-terrain="lat:45.557749; lon:-122.6794; elevation:100000; radius:1000;">
 </a-entity>
 
-<a-sphere position="0 0 0" wireframe="true" radius="9" color="#EF2D5E"></a-sphere>
+<a-sphere position="0 0 0" wireframe="true" radius="900" color="#EF2D5E"></a-sphere>
 
-<a-entity id="cameraRig">
-<a-entity id="camera" position="0 0 50" camera="fov:45; zoom:1; near:0.001; far:60;" wasd-controls look-controls orbit-controls></a-entity>
+<a-entity id="cameraRig" position="0 0 5000">
+  <a-entity id="camera" camera="fov:45;zoom:1;near:0.001;far:6000" wasd-controls look-controls orbit-controls></a-entity>
+  <a-entity id="lefthand" camera-transform-controls-hand="hand:left" vive-controls="hand: left" oculus-touch-controls="hand: left" windows-motion-controls="hand: left"></a-entity>
+  <a-entity id="righthand" camera-transform-controls-hand="hand:right" vive-controls="hand: right" oculus-touch-controls="hand: right" windows-motion-controls="hand: right"></a-entity>
 </a-entity>
 
 </a-scene>

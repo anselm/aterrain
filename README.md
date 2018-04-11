@@ -11,11 +11,11 @@ For [A-Frame](https://aframe.io).
 
 The primary use case of this component is on-the-ground street level rendering of pieces of the world. Here is an example of San Francisco:
 
-<a href="https://anselm.github.io/aterrain/examples/sanfrancisco.html"> <img alt="sanfrancisco" target="_blank" src="https://github.com/anselm/aterrain/blob/master/examples/assets/sanfrancisco.png?raw=true" width="660"></a>
+<a href="https://anselm.github.io/aterrain/examples/sanfrancisco"> <img alt="sanfrancisco" target="_blank" src="https://github.com/anselm/aterrain/blob/master/examples/assets/sanfrancisco.png?raw=true" width="660"></a>
 
 Here is an example of using ATerrain as a globe renderer (although you will probably prefer to use Cesium if you want to do this):
 
-<a href="https://anselm.github.io/aterrain/examples/helloworld.html">
+<a href="https://anselm.github.io/aterrain/examples/helloworld">
   <img alt="hello world" target="_blank" src="https://github.com/anselm/aterrain/blob/master/examples/assets/helloworld.png?raw=true" width="660">
 </a>
 

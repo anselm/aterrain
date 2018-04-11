@@ -112,7 +112,15 @@ AFRAME.registerComponent('a-terrain', {
   },
 
   ///
-  /// Update the view for an optional case where the planet surface is moved to 0,0,0 to make it easier for developers
+  /// In this viewing style the camera position not used
+  /// the caller specifies a latitude and longitude and elevation
+  /// this code rotates the world so that that given lat/lon is facing due north
+  /// and then the surface of the planet is moved down to be at the origin
+  /// the net effect is that if there was a camera at the origin that that point should appear to be on the earths surface
+  ///
+  /// however there is another problem here which is that the world may be very very tiny - tiles at a given lod may be smaller than a single pixel
+  /// so the entire world has to also be scaled to a desired zoom level to see geometry in what appears to be a 1 = one meter kind of display
+  /// we do not want to scale the camera (we don't want to mess with the developers camera at all) so instead the world must be scaled
   ///
 
   updateView_Origin: function() {
@@ -142,7 +150,7 @@ AFRAME.registerComponent('a-terrain', {
       let distance = (world_radius+groundValue+data.elevation)*data.radius/world_radius;
       // move earth surface here
       obj.position.set(0,0,-distance);
-  //    console.log("for elevation " + data.elevation + " the lod is " + data.lod + " and ground is at " + groundValue + " rad="+data.radius + " distance=" + distance );
+      console.log("for elevation " + data.elevation + " the lod is " + data.lod + " and ground is at " + groundValue + " rad="+data.radius + " distance=" + distance );
     };
 
 
@@ -214,6 +222,9 @@ AFRAME.registerComponent('a-terrain', {
       element = document.createElement('a-entity');
       element.setAttribute('id',uuid);
       element.setAttribute('a-tile',{lat:data.lat,lon:data.lon,lod:data.lod,radius:data.radius});
+      // set lod and loaded directly on the element right now because getAttribute() appears to sometimes not be set synchronously
+      element.lod = data.lod;
+      element.loaded = 0;
       this.el.appendChild(element);
     }
     this.tiles[scheme.uuid] = element;
@@ -225,34 +236,26 @@ AFRAME.registerComponent('a-terrain', {
 
   sweepTiles: function() {
 
-    // return immediately if there are any tiles anywhere that are not fully loaded
-    let scope = this;
-    let ready = 1;
+    let lod = this.data.lod;
 
-    Object.keys(scope.tiles).forEach( (key) => {
-      let element = scope.tiles[key];
-      if(element.complete != 1) {
-        ready = 0;
+    // bail immediately and do not sweep if any tiles at the current lod are not ready
+    let keys = Object.keys(this.tiles);
+    for(let i = 0; i < keys.length; i++) {
+      let element = this.tiles[keys[i]];
+      if(element.lod == lod && element.loaded != 1) {
+        let properties = element.getAttribute('a-tile');
+        return;
       }
-    });
-
-    // not ready do do any sweeping
-    if(!ready) {
-      return;
-    }
+    };
 
     // sweep other tiles that are not at current lod
 
-    Object.keys(scope.tiles).forEach((key) => {
-      let element = scope.tiles[key];
-      if(element.complete != 1) {
-        console.error("An incomplete tile managed to get through the sweeper " + element.id);
-        return;
-      }
-      if(element.complete_lod != scope.data.lod && element.getAttribute("visible") != false) {
+    for(let i = 0; i < keys.length; i++) {
+      let element = this.tiles[keys[i]];
+      if(element.lod != lod && element.getAttribute("visible") != false) {
         element.setAttribute("visible",false); 
       }
-    });
+    };
 
   },
 
