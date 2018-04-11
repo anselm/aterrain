@@ -19,7 +19,8 @@ AFRAME.registerComponent('a-terrain', {
            lon: {type: 'number', default:    0},     // longitude
            lod: {type: 'number', default:    1},     // this is computed but left here since having a separate parent bucket/schema is a hassle
      elevation: {type: 'number', default:    1},     // height above ground
-      observer: {type: 'string', default:   ""}      // id of camera or cameraRig - if there is not one then the lod has to be manually specified
+      observer: {type: 'string', default:   ""},     // id of camera or cameraRig - if there is not one then the lod has to be manually specified
+        fovpad: {type: 'number', default:    0}      // fovpad - a bit of a hack - for street level views get these extra tiles
   },
 
   ///
@@ -76,15 +77,20 @@ AFRAME.registerComponent('a-terrain', {
 
     // Find observer again every frame since it may change or just return
     let observer = this.el.sceneEl.querySelector("#"+this.data.observer);
+    let observer_new_position = new THREE.Vector3(0,0,0);
+    let observer_new_rotation = new THREE.Vector3(0,0,0);
     if(!observer) {
-      return;
+      console.error("ATerrain: observer not found " + this.data.observer);
+    } else {
+      observer_new_position = observer.object3D.getWorldPosition().clone();
+      observer_new_rotation = observer.object3D.rotation.clone();
     }
 
     // Exit if no change
-    if(this.observer_position && observer.object3D.position.equals(this.observer_position)) {
+    if(this.observer_position && observer_new_position.equals(this.observer_position)) {
       return;
     }
-    this.observer_position = observer.object3D.position.clone();
+    this.observer_position = observer_new_position;
 
     // How far is the target from the globe in the model distance?
     let model_distance = this.el.object3D.position.distanceTo( this.observer_position );
@@ -100,8 +106,8 @@ AFRAME.registerComponent('a-terrain', {
     this.data.elevation = model_distance * world_radius / this.data.radius - world_radius + ground_value;
 
     // Recover latitude and longitude from observer
-    this.data.lat = -observer.object3D.rotation.x * 180.0 / Math.PI;
-    this.data.lon = observer.object3D.rotation.y * 180.0 / Math.PI;
+    this.data.lat = -observer_new_rotation.x * 180.0 / Math.PI;
+    this.data.lon = observer_new_rotation.y * 180.0 / Math.PI;
 
     // TODO mercator is giving us some trouble here - examine more later - constrain for now
     if(this.data.lat > 85) this.data.lat = 85;
@@ -112,15 +118,14 @@ AFRAME.registerComponent('a-terrain', {
   },
 
   ///
-  /// In this viewing style the camera position not used
-  /// the caller specifies a latitude and longitude and elevation
-  /// this code rotates the world so that that given lat/lon is facing due north
-  /// and then the surface of the planet is moved down to be at the origin
-  /// the net effect is that if there was a camera at the origin that that point should appear to be on the earths surface
+  /// Update View with some strong opinions
   ///
-  /// however there is another problem here which is that the world may be very very tiny - tiles at a given lod may be smaller than a single pixel
-  /// so the entire world has to also be scaled to a desired zoom level to see geometry in what appears to be a 1 = one meter kind of display
-  /// we do not want to scale the camera (we don't want to mess with the developers camera at all) so instead the world must be scaled
+  /// Ignores the camera position and only uses longitude, latitude and elevation.
+  /// Rotates the world so that that longitute and latitude are at the origin.
+  /// TODO: should also set elevation so that elevation is at the origin - not done yet
+  ///
+  /// The idea is that the viewers camera stays around the origin and we bring the world to them.
+  /// TODO there are some numerical limits with scale that have to be resolved
   ///
 
   updateView_Origin: function() {
@@ -135,7 +140,7 @@ AFRAME.registerComponent('a-terrain', {
     var q = new THREE.Quaternion();
     q.setFromAxisAngle( new THREE.Vector3(0,1,0), THREE.Math.degToRad(-data.lon) );
     obj.quaternion.premultiply(q);
-    q.setFromAxisAngle( new THREE.Vector3(1,0,0), THREE.Math.degToRad(data.lat) );
+    q.setFromAxisAngle( new THREE.Vector3(1,0,0), THREE.Math.degToRad(-(90-data.lat) ) );
     obj.quaternion.premultiply(q);
 
     // deal with distance and tiles
@@ -173,7 +178,7 @@ AFRAME.registerComponent('a-terrain', {
 
   ///
   /// Given some facts about a desired longitude and latitude and level of detail generate some tiles here
-  /// TODO the assumption here is that the player is looking straight down and the camera has an fov of 45' - this assumption is wrong.
+  /// TODO the assumption here is that the player is looking straight down and the camera has an fov of 45' - this assumption is wrong for street level.
   ///
 
   updateTiles: function() {
@@ -188,8 +193,9 @@ AFRAME.registerComponent('a-terrain', {
     let count = Math.floor(this.data.elevation / scheme.width_tile_lat) + 1;
 
     // TODO improve view strategy - render enough tiles to cover the degrees visible - regardless of current lod - however it depends on the camera fov being 45'
-    for(let i = -count;i<count+1;i++) {
-      for(let j = -count;j<count+1;j++) {
+    let fovpad = this.data.fovpad;
+    for(let i = -count-fovpad;i<count+1+fovpad;i++) {
+      for(let j = -count-fovpad;j<count+1+fovpad;j++) {
         // TODO this is sloppy; there is a chance of a numerical error - it would be better to be able to ask for tiles by index as well as by lat/lon
         let scratch = { lat:this.data.lat + scheme.degrees_lat * i, lon:this.data.lon + scheme.degrees_lon * j, lod:this.data.lod, radius:this.data.radius };
         // hack terrible code TODO cough forever loop
@@ -258,7 +264,5 @@ AFRAME.registerComponent('a-terrain', {
     };
 
   },
-
-
 
 });

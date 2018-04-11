@@ -9,14 +9,20 @@ For [A-Frame](https://aframe.io).
 
 ### Examples
 
-The primary use case of this component is on-the-ground street level rendering of pieces of the world. Here is an example of San Francisco:
+Here's an example of rendering a specific piece of the world at street level. In this case being 2000 meters above Coquetta Cafe on the Embarcadero in San Francisco with 3d buildings. In this example the world scale is set to 1:1 and the lighting and z-buffering are all stressed to their limits due to the numerical scales used. (It's more practical to set a smaller radius for the planet).
 
 <a href="https://anselm.github.io/aterrain/examples/sanfrancisco"> <img alt="sanfrancisco" target="_blank" src="https://github.com/anselm/aterrain/blob/master/examples/assets/sanfrancisco.png?raw=true" width="660"></a>
 
-Here is an example of using ATerrain as a globe renderer (although you will probably prefer to use Cesium if you want to do this):
+Here is an example of using ATerrain as a globe renderer. In this example aterrain is observing the camera and adjusting what it shows dynamically so that the viewer sees that part of the earth at ever increasing levels of detail. If you zoom into San Francisco you will see buildings. If you want a general globe renderer it's probably better to use Cesium since it has specialized features for rendering globes.
 
 <a href="https://anselm.github.io/aterrain/examples/helloworld">
   <img alt="hello world" target="_blank" src="https://github.com/anselm/aterrain/blob/master/examples/assets/helloworld.png?raw=true" width="660">
+</a>
+
+Here is an example of the full globe dropped into the basic demo scene. Unfortunately it's not possible to render the entire globe at any level of detail, but you could have it watch the camera and as you got close enough to the globe it could update that portion of the display. But since camera movement is linear through space and zooming into the earths surface is logarithmic this would not provide the kind of level of detail you want. Another option would be to perhaps render the entire globe at some intermediate level of detail - such as at a level of depth 4 or 5 - this is more data but it would allow a static globe that you could get fairly close to.
+
+<a href="https://anselm.github.io/aterrain/examples/hellowebvr_globe">
+  <img alt="hello world" target="_blank" src="https://github.com/anselm/aterrain/blob/master/examples/assets/hellowebvr_globe.png?raw=true" width="660">
 </a>
 
 ### API

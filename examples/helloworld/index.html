@@ -4,22 +4,28 @@
 <script src="../js/aframe-orbit-controls-component.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/webpack-cesium/1.37.0/webpack.cesium.js"></script>
 <script src="../../dist/aframe-aterrain-component.js"></script>
+<script src="https://unpkg.com/aframe-environment-component@1.0.0/dist/aframe-environment-component.min.js"></script>
 
 <style>
-body { background:#303030; overflow:hidden;}
+body { background:#101010; overflow:hidden;}
 </style>
 
 <a-scene cursor="rayOrigin: mouse">
 
-<a-entity light="type: directional; color: #EED; intensity: 3.5" position="-1 1 1"></a-entity>
 
-<a-entity id="world" visible="true" a-terrain="lat:45.557749; lon:-122.6794; elevation:263727982; radius:1000; observer:camera">
+<a-assets>
+<img id="sky" src="../assets/PIA12348_hires.jpg">
+</a-assets>
+
+<!-- note that even in vr use cases setting observer=camera should still work even though there's a parent cameraRig -->
+<a-entity id="world" position="0 0 0" visible="true" a-terrain="lat:45.557749; lon:-122.6794; elevation:0; radius:1000; observer:camera">
 </a-entity>
 
+<a-entity id="cameraRig">
 <a-entity
     id="camera"
-    camera="fov: 45; zoom: 1; near:0.01; far:6000"
-    position="0 0 5000"
+    camera="fov: 45; near:0.01; far:10000"
+    position="0 1 5000"
     orbit-controls="
         autoRotate: false;
         target: #world;
@@ -33,6 +39,19 @@ body { background:#303030; overflow:hidden;}
         enableProportionalVelocity:true;
     ">
 </a-entity>
+<a-entity id="lefthand" camera-transform-controls-hand="hand:left" vive-controls="hand: left" oculus-touch-controls="hand: left" windows-motion-controls="hand: left"></a-entity>
+<a-entity id="righthand" camera-transform-controls-hand="hand:right" vive-controls="hand: right" oculus-touch-controls="hand: right" windows-motion-controls="hand: right"></a-entity>
+</a-entity>
+
+<!-- this turns out to be unwieldy
+<a-entity id="environment" environment="playArea:100; xground: none; preset: starry; fog: 0"></a-entity>
+-->
+
+<!-- it's helpful to set the lighting ourselves -->
+<a-entity light="type: directional; color: #EED; intensity: 3" position="-1 1 1"></a-entity>
+
+<!-- this works but does require a large far distance for camera and that affects near field zbuffer depth -->
+<a-sky src="#sky" radius="4000" color="#6EBAA7" ></a-sky>
 
 </a-scene>
 
