@@ -32,6 +32,11 @@ Here is an example of the full globe dropped into the basic demo scene. Unfortun
 | lat      | latitude    | 0             |
 | lon      | longitude   | 0             |
 | radius   | planet size | 1000          |
+| elevation| for lod     | 100000000     |
+| fovpad   | extra tiles | 0             |
+| observer | camera      |               |
+
+Specify the latitude and longitude where you would like to see detail on the surface of the globe. This is where tiles will be generated. The elevation is used to estimate the level of detail, and this in turn dictates which layer of the tile pyramid will be used. A very small elevation would generate tiles that are very high resolution - and thus cover only a very small part of the earths surface. Fov padding can be used to force fetch some extra tiles (for example you may wish to render the entire world at a high resolution - so you could pick a lower elevation and pad it out with some extra tiles). If you specify an observer then the engine will automatically compute the latitude, longitude and elevation from the observers position in space relative to the globe. If you don't specify an observer then you need to set the latitude and longitude yourself - for example if you have a street level view of a city that you're interested in, but you also want to walk around in that city - then you have to update the position to fetch tiles so that you don't walk off the edge of visible tile space.
 
 ### Installation
 
