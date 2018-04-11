@@ -78,9 +78,9 @@ I'm using a few specific pieces of Cesium (with support from the Cesium team for
   - Cesium Navigation Controls (aterrain doesn't use these nav controls)
   - Cesium Geography
     - TerrainProvider (aterrain uses this piece to fetch elevation data)
-    - ImageryProvider (aterrain this piece to fetch images to drape on elevation data)
+    - ImageryProvider (aterrain can use this or go directly to a raw provider)
     - 3d tiles (aterrain uses this piece to fetch and paint 3d buildings)
-  - Cesium Scene (aterrain doesn't use any of the cesium scene graph support or any custom shaders or any shaders at all)
+  - Cesium Scene (aterrain doesn't use any of the cesium scene graph support or any shaders at all)
     - Scene, Camera, SkyBox, SkyAtmosphere, 
     - Material, Color
     - Globe, Geometry, Polylines, Primitives, Billboards, Label
@@ -93,3 +93,12 @@ I'm using a few specific pieces of Cesium (with support from the Cesium team for
     - Matrix3 / Matrix4
     - Ellipsoid concept
     - Map Projection
+
+### Todo
+
+  - For the SF case it would be nice to calculate the FOV better and to dynamically load tiles as the player moves around
+  - It would be nice to not just use 0,0,0 but any specified displacement
+  - Some folks want to be able to fly from point A to point B - this could be done by exposing the right hooks into the engine
+  - An #MR use case would be nice; fairly easy to do at this point
+
+
