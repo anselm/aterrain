@@ -257,7 +257,8 @@ class ImageServer {
   }
 
   canvas_to_material(canvas) {
-    let material = new THREE.MeshPhongMaterial( { color:0xffffff, wireframe:false });
+    //let material = new THREE.MeshPhongMaterial( { color:0xffffff, wireframe:false });
+    let material = new THREE.MeshLambertMaterial( { color:0xffffff, wireframe:false }); //shading: THREE.SmoothShading});
     material.map = new THREE.Texture(canvas);
     material.map.needsUpdate = true;
     return material;

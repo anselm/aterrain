@@ -248,7 +248,8 @@ class TileServer  {
       }
     }
     geometry.uvsNeedUpdate = true;
-    // face normals
+    // normals
+    geometry.computeVertexNormals();
     geometry.computeFaceNormals();
     return geometry;
   }
@@ -282,7 +283,8 @@ class TileServer  {
       geometry.faceVertexUvs[0].push([ new THREE.Vector2(vxa,vya), new THREE.Vector2(vxb,vyb), new THREE.Vector2(vxc,vyc) ]);
     }
     geometry.uvsNeedUpdate = true;
-    // face normals
+    // normals
+    geometry.computeVertexNormals();
     geometry.computeFaceNormals();
     return geometry;
   }

@@ -149,7 +149,7 @@ AFRAME.registerComponent('a-terrain', {
       // the world surface should touch the origin
       let distance = (world_radius+groundValue+data.elevation)*data.radius/world_radius;
       // move earth surface here
-      obj.position.set(0,0,-distance);
+    //  obj.position.set(0,0,-distance);
       console.log("for elevation " + data.elevation + " the lod is " + data.lod + " and ground is at " + groundValue + " rad="+data.radius + " distance=" + distance );
     };
 
@@ -262,4 +262,3 @@ AFRAME.registerComponent('a-terrain', {
 
 
 });
-
