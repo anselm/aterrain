@@ -125,7 +125,7 @@ AFRAME.registerComponent('a-terrain', {
       if(data.target_latitude || data.target_longitude || data.target_elevation) {
         data.latitude += ( data.target_latitude - data.latitude ) / data.target_steprate;
         data.longitude += ( data.target_longitude - data.longitude ) / data.target_steprate;
-        data.elevation += ( data.target_elevation - data.elevation ) / data.tartet_steprate;
+        data.elevation += ( data.target_elevation - data.elevation ) / data.target_steprate;
       }
 
       if(data.follow & 1) {
@@ -176,6 +176,8 @@ AFRAME.registerComponent('a-terrain', {
     // TODO remove this by code cleanup later
     data.lat = data.latitude;
     data.lon = data.longitude;
+
+console.log("looking at " + data.latitude + " " + data.longitude + " " + data.lod + " " + data.elevation);
 
     // TODO mercator is giving us some trouble here - TODO examine more later - constrain for now
     if(data.lat > 85) data.lat = 85;
