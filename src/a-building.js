@@ -12,7 +12,8 @@ import TileServer from './TileServer.js';
 ///
 /// TODO buildings are still not centered perfectly
 /// TODO rather than relying on TileServer a new lower level math library could be defined
-
+/// See - https://github.com/KhronosGroup/glTF/tree/master/extensions/1.0/Vendor/CESIUM_RTC ...
+///
 
 AFRAME.registerComponent('a-building', {
   schema: {
@@ -28,9 +29,11 @@ AFRAME.registerComponent('a-building', {
     let data = scope.data;
     let scheme = TileServer.instance().scheme_elaborate(data);
     GLTFLoader.load(scheme.building_url,function(gltf) {
-      scope.el.setObject3D('mesh',gltf.scene);
-      let world_radius = data.world_radius / 10; // unsure why this is TODO!!!?
-      let s = data.radius/world_radius;
+      // compute scale if geometric radius differs from planet radius
+      let s = data.radius/data.world_radius;
+      // multiply size by 10 for some unknown reason
+      s = s * 10;
+      // apply scale
       scope.el.object3D.scale.set(s,s,s);
       // fix building rotation to reflect frame of reference here (they are pre-rotated for a different frame of reference)
       scope.el.object3D.rotation.set(0,-Math.PI/2,0);
@@ -40,6 +43,8 @@ AFRAME.registerComponent('a-building', {
       let lon = scheme.rect.west+scheme.degrees_lonrad/2;
       let v = TileServer.instance().ll2v(lat,lon,scheme.radius);
       scope.el.object3D.position.set(v.x,v.y,v.z);
+      // add to world
+      scope.el.setObject3D('mesh',gltf.scene);
     });
   }
 });

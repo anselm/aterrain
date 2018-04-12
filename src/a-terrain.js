@@ -49,7 +49,8 @@ AFRAME.registerComponent('a-terrain', {
     lod:              {type: 'number', default: 15          },
     // fovpad is a hack to circumvent limits with observer field of view; basically a camera could be near the planet but see the whole planet at once
     // TODO the tilings strategy should be improved to deal with some of the possible cases of observer field of view - remove this fudge factor later
-    fovpad:           {type: 'number', default: 0           }
+    fovpad:           {type: 'number', default: 0           },
+    debug:            {type: 'number', default: 0           }
   },
 
   ///
@@ -176,7 +177,7 @@ AFRAME.registerComponent('a-terrain', {
     data.lat = data.latitude;
     data.lon = data.longitude;
 
-console.log("looking at " + data.latitude + " " + data.longitude + " " + data.lod + " " + data.elevation);
+    if(this.data.debug)console.log("looking at " + data.latitude + " " + data.longitude + " " + data.lod + " " + data.elevation);
 
     // TODO mercator is giving us some trouble here - TODO examine more later - constrain for now
     if(data.lat > 85) data.lat = 85;

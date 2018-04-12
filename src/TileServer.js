@@ -75,6 +75,10 @@ class TileServer  {
 
   scheme_elaborate(data) {
 
+    // If I was doing this correctly:
+    // Ellipsoid : https://github.com/AnalyticalGraphicsInc/cesium/blob/master/Source/Core/Ellipsoid.js#L85
+    // cartographicToCartesian : https://github.com/AnalyticalGraphicsInc/cesium/blob/master/Source/Core/Ellipsoid.js#L386
+
     // This commented out approach is the more correct way get below details from an arbitrary cesium terrain provider - but requires waiting for ready event
     // this.terrainProvider.tilingScheme.getNumberOfXTilesAtLevel(lod) * (180+lon) / 360;
     // this.terrainProvider.tilingScheme.getNumberOfYTilesAtLevel(lod) * ( 90-lat) / 180;
@@ -253,6 +257,11 @@ class TileServer  {
   }
 
   toGeometry(scheme) {
+
+    // In cesium this is done on GPU - which is not an option sadly due to game collisions and physics - see:
+    //    EncodedCartesian3.js
+    //    translateRelativeToEye.glsl
+
     let tile = scheme.tile;
     let geometry = new THREE.Geometry();
     let world_radius = scheme.world_radius;
