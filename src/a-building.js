@@ -29,7 +29,7 @@ AFRAME.registerComponent('a-building', {
     let scheme = TileServer.instance().scheme_elaborate(data);
     GLTFLoader.load(scheme.building_url,function(gltf) {
       scope.el.setObject3D('mesh',gltf.scene);
-      let world_radius = this.data.world_radius / 10; // unsure why this is TODO!!!?
+      let world_radius = data.world_radius / 10; // unsure why this is TODO!!!?
       let s = data.radius/world_radius;
       scope.el.object3D.scale.set(s,s,s);
       // fix building rotation to reflect frame of reference here (they are pre-rotated for a different frame of reference)
