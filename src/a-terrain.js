@@ -123,30 +123,29 @@ AFRAME.registerComponent('a-terrain', {
 
       // If there's a target latitude and longitude then slerp to it - TODO improve -> use the frame rate timing to avoid any timing slow down issues
       if(data.target_latitude || data.target_longitude || data.target_elevation) {
-        data.latitude += ( data.target_latitude - data.latitude ) / data.target_steprate;
-        data.longitude += ( data.target_longitude - data.longitude ) / data.target_steprate;
-        data.elevation += ( data.target_elevation - data.elevation ) / data.target_steprate;
+        data.latitude += ( data.target_latitude - data.latitude ) * data.target_steprate;
+        data.longitude += ( data.target_longitude - data.longitude ) * data.target_steprate;
+        data.elevation += ( data.target_elevation - data.elevation ) * data.target_steprate;
       }
 
       if(data.follow & 1) {
 
         // the planet is rotated so that the salient interest area is pointing north - ie on a vector of 0,1,0
 
-        let obj = this.el.object3D;
-        obj.rotation.set(0,0,0);
+        this.el.object3D.rotation.set(0,0,0);
 
         var q = new THREE.Quaternion();
         q.setFromAxisAngle( new THREE.Vector3(0,1,0), THREE.Math.degToRad(-data.lon) );
-        obj.quaternion.premultiply(q);
+        this.el.object3D.quaternion.premultiply(q);
         q.setFromAxisAngle( new THREE.Vector3(1,0,0), THREE.Math.degToRad(-(90-data.lat) ) );
-        obj.quaternion.premultiply(q);
+        //q.setFromAxisAngle( new THREE.Vector3(1,0,0), THREE.Math.degToRad(data.lat) ); // <- if you wanted lat,lon just facing you if you were at 0,0,1
+        this.el.object3D.quaternion.premultiply(q);
 
       }
 
       if(data.follow & 2) {
-
-        // the planet surface is moved to 0,0,0 - TBD
-
+        // the planet surface is moved to 0,0,0
+        this.el.object3D.position.set(0,-(data.world_radius+data.elevation),0);
       }
 
     }

@@ -11,20 +11,28 @@ body { background:#87CEEB; overflow:hidden;}
 
 <a-scene camera-transform-controls cursor="rayOrigin: mouse">
 
-<a-light type="directional" color="#ffffff" intensity="3.5" position="-1 1 1"></a-entity>
-<a-light type="ambient" color="#445451"></a-light>
-<a-light type="point" intensity="2" position="2 4 4"></a-light>
-
-<a-entity id="world" visible="true" a-terrain="fovpad:2; lat:37.7983222; lon:-122.3972797; elevation:6000; radius:63727982;">
+<a-entity a-terrain="fovpad:1;
+                     latitude:37.7983222;
+                     longitude:-122.3972797;
+                     elevation:4000;
+                     xtarget_latitude:37.7983222;
+                     xtarget_longitude:-100.397279;
+                     xtarget_elevation:40000;
+                     xtarget_steprate:0.01;
+                     radius:63727982;"
+                  >
 </a-entity>
 
-<a-entity id="cameraRig" position="0 63729982 0">
+<a-entity id="cameraRig" position="0 0 0">
   <a-entity id="camera" camera="fov:45;zoom:1;near:0.00001;far:10000" wasd-controls look-controls orbit-controls></a-entity>
   <a-entity id="lefthand" camera-transform-controls-hand="hand:left" vive-controls="hand: left" oculus-touch-controls="hand: left" windows-motion-controls="hand: left"></a-entity>
   <a-entity id="righthand" camera-transform-controls-hand="hand:right" vive-controls="hand: right" oculus-touch-controls="hand: right" windows-motion-controls="hand: right"></a-entity>
 </a-entity>
 
 
+<a-light type="directional" color="#ffffff" intensity="3.5" position="-1 1 1"></a-light>
+<a-light type="ambient" color="#445451"></a-light>
+<a-light type="point" intensity="2" position="2 4 4"></a-light>
 
 </a-scene>
 
