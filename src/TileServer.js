@@ -57,25 +57,17 @@ class TileServer  {
     return best;
   }
 
-  getRadius() {
-    return 63727982.0;
-  }
-
-  getCircumference() {
-    return 400414720.159; // 2*Math.PI*this.getRadius();
-  }
-
-  elevation2lod(d) {
-    let c = this.getCircumference();
-    // truncate reasonable estimations for lod
+  elevation2lod(world_radius,d) {
+    let c = 2*Math.PI*world_radius;
+    // truncate reasonable estimations for lod where d = distane above planetary surface in planetary units
     if(d < 1) d = 1;
     if(d > c/2) d = c/2;
-    // even a small camera fov of 45' would show the entire circumference of the earth at a distance of circumference/2 if the earth was flattened
+    // even a small camera fov of 45' would show the entire circumference of the planet at a distance of r*2 if the planet was flattened
     // the visible area is basically distance * 2 ... so  ... number of tiles = circumference / (distance*2)
     // visible coverage is 2^(lod+1) = number of tiles  or .... 2^(lod+1) = c / (d*2) ... or ... 
     // also see https://gis.stackexchange.com/questions/12991/how-to-calculate-distance-to-ground-of-all-18-osm-zoom-levels/142555#142555
     let lod = Math.floor(Math.log2(c/(d*2)));
-    // truncate
+    // truncate hard limits for external tile services
     if(lod < 0) lod = 0;
     if(lod > 19) lod = 19;
     return lod;
@@ -95,7 +87,12 @@ class TileServer  {
     let lat = scheme.lat = data.lat;
     let lon = scheme.lon = data.lon;
     let lod = scheme.lod = data.lod;
+
+    // the rendering radius
     let radius = scheme.radius = data.radius;
+
+    // the planet radius
+    scheme.world_radius = data.world_radius;
 
     // get number of tiles wide and tall - hardcoded to cesium terrain tiles TMS format
     scheme.w = Math.pow(2,lod+1);
@@ -110,6 +107,7 @@ class TileServer  {
     scheme.ytile = Math.floor(scheme.y);
 
     // calculate uuid for tile
+    // TODO must generate custom schemes for multiple simultaneous globes on the same aframe app
     scheme.uuid = "tile-"+scheme.xtile+"-"+scheme.ytile+"-"+lod;
 
     // position in radians
@@ -135,7 +133,7 @@ class TileServer  {
     scheme.building_url = "https://s3.amazonaws.com/cesium-dev/Mozilla/SanFranciscoGltf15Gz/"+scheme.lod+"/"+scheme.xtile+"/"+scheme.ytile+".gltf";
 
     // convenience values
-    scheme.width_world = this.getCircumference();
+    scheme.width_world = 2*Math.PI*scheme.world_radius;
     scheme.width_tile_flat = scheme.width_world / scheme.w;
     scheme.width_tile_lat = scheme.width_tile_flat * Math.cos(data.lat * Math.PI / 180);
 
@@ -257,13 +255,13 @@ class TileServer  {
   toGeometry(scheme) {
     let tile = scheme.tile;
     let geometry = new THREE.Geometry();
-    let earth_radius = this.getRadius();
+    let world_radius = scheme.world_radius;
     // build vertices on the surface of a globe given a linear latitude and longitude series of stepped values -> makes evenly distributed spherically points
     for (let i=0; i<tile._uValues.length; i++) {
       let lonrad = tile._uValues[i]/32767*scheme.degrees_lonrad + scheme.rect.west;
       let latrad = tile._vValues[i]/32767*scheme.degrees_latrad + scheme.rect.south;
       let elevation = (((tile._heightValues[i]*(tile._maximumHeight-tile._minimumHeight))/32767.0)+tile._minimumHeight);
-      let v = this.ll2v(latrad,lonrad,(earth_radius+elevation)*scheme.radius/earth_radius);
+      let v = this.ll2v(latrad,lonrad,(world_radius+elevation)*scheme.radius/world_radius);
       geometry.vertices.push(v);
     }
     // vertices to faces

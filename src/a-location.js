@@ -9,9 +9,8 @@ import TileServer from './TileServer.js';
 /// A-location
 /// If this is inside an a-terrain then the child will be on the surface at the specified latitude and longitude
 ///
-/// TODO should peek at the parent to find the radius rather than hard coded
 /// TODO tileserver.scheme_elaborate could be moved to a lower level math module that everybody uses
-/// TODO there are still some size / scale issues that are incorrect
+/// TODO would be nice to adjust size so it is always visible based on observer eyeball size
 ///
 
 AFRAME.registerComponent('a-location', {
@@ -19,6 +18,7 @@ AFRAME.registerComponent('a-location', {
        lat: {type: 'number', default:  0},
        lon: {type: 'number', default:  0},
     radius: {type: 'number', default:  1},
+    world_radius: {type: 'number', default:  63727982},
   },
   init: function() {
     let scheme = TileServer.instance().scheme_elaborate(this.data);
