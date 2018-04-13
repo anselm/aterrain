@@ -269,17 +269,17 @@ class TileServer  {
     let geometry = new THREE.Geometry();
     let world_radius = scheme.world_radius;
     let stretch = scheme.stretch || 1;
+
+     // test - let's subtract the planet radius at the smallest corner of the tile to see if that helps reduce camera near/far clipping jitter
+     geometry.offset = this.ll2v(scheme.rect.south,scheme.rect.west,scheme.radius);
+
     // build vertices on the surface of a globe given a linear latitude and longitude series of stepped values -> makes evenly distributed spherically points
     for (let i=0; i<tile._uValues.length; i++) {
       let lonrad = tile._uValues[i]*scheme.degrees_lonrad/32767 + scheme.rect.west;
       let latrad = tile._vValues[i]*scheme.degrees_latrad/32767 + scheme.rect.south;
       let elevation = (((tile._heightValues[i]*(tile._maximumHeight-tile._minimumHeight))/32767.0)+tile._minimumHeight)*stretch;
-      let v = 0;
-      if(world_radius) {
-        v = this.ll2v(latrad,lonrad,(world_radius+elevation)*scheme.radius/world_radius);
-      } else {
-        v = this.ll2v(latrad,lonrad,elevation);
-      }
+      let v = this.ll2v(latrad,lonrad,(world_radius+elevation)*scheme.radius/world_radius);
+      v = v.sub(geometry.offset); // test
       geometry.vertices.push(v);
     }
     // vertices to faces

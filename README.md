@@ -9,7 +9,7 @@ For [A-Frame](https://aframe.io).
 
 ### Examples
 
-Here's an example of rendering a specific piece of the world at street level. In this case at the Coquetta Cafe on the Embarcadero in San Francisco with 3d buildings. In this example the world scale is set to 1:1 and the lighting and z-buffering are all stressed to their limits due to the numerical scales used. (It's more practical to set a smaller radius for the planet).
+Here's an example of rendering a specific piece of the world at street level (meaning wasd nav controls are slow). In this case at the Coquetta Cafe on the Embarcadero in San Francisco with 3d buildings. In this example the world scale is set to 1:1 and the lighting and z-buffering are all stressed to their limits due to the numerical scales used. (It's more practical to set a smaller radius for the planet).
 
 <a href="https://anselm.github.io/aterrain/examples/sanfrancisco"> <img alt="sanfrancisco" target="_blank" src="https://github.com/anselm/aterrain/blob/master/examples/assets/sanfrancisco.png?raw=true" width="660"></a>
 
@@ -25,7 +25,7 @@ Here is an example of the full globe dropped into the basic demo scene. Unfortun
   <img alt="hello world" target="_blank" src="https://github.com/anselm/aterrain/blob/master/examples/assets/hellowebvr_globe.png?raw=true" width="660">
 </a>
 
-Here is an example of the Grand Canyon.
+Here is an example of the Grand Canyon (this is rendered at a smaller scale so wasd controls are fast).
 
 <a href="https://anselm.github.io/aterrain/examples/grandcanyon">
   <img alt="hello world" target="_blank" src="https://github.com/anselm/aterrain/blob/master/examples/assets/grandcanyon.png?raw=true" width="660">
