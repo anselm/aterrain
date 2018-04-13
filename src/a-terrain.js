@@ -146,8 +146,9 @@ AFRAME.registerComponent('a-terrain', {
       }
 
       if(data.follow & 2) {
-        // the planet surface is moved to 0,0,0
-        this.el.object3D.position.set(0,-(data.world_radius+data.elevation),0);
+        // the planet surface is moved to 0,0,0 in model coordinates
+        let height = data.radius * data.elevation / data.world_radius + data.radius;
+        this.el.object3D.position.set(0,-height,0);
       }
 
     }
@@ -203,8 +204,9 @@ AFRAME.registerComponent('a-terrain', {
         let scratch = { lat:data.lat + scheme.degrees_lat * i,
                         lon:data.lon + scheme.degrees_lon * j,
                         lod:data.lod,
-                        radius:data.radius,
-                        world_radius:data.world_radius
+                    stretch:data.stretch,
+                     radius:data.radius,
+               world_radius:data.world_radius
                       };
         // hack terrible code TODO cough forever loop
         while(scratch.lon < -180) scratch.lon += 360;
@@ -230,7 +232,7 @@ AFRAME.registerComponent('a-terrain', {
       // if not found then ask a tile to build itself in such a way that it covers the given latitude, longitude, lod
       element = document.createElement('a-entity');
       element.setAttribute('id',scheme.uuid);
-      element.setAttribute('a-tile',{lat:data.lat,lon:data.lon,lod:data.lod,radius:data.radius,world_radius:data.world_radius});
+      element.setAttribute('a-tile',data);
       // set lod and loaded directly on the element right now because getAttribute() appears to sometimes not be set synchronously
       element.lod = data.lod;
       element.loaded = 0;

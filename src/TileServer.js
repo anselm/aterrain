@@ -98,6 +98,9 @@ class TileServer  {
     // the planet radius
     scheme.world_radius = data.world_radius;
 
+    // stretch
+    scheme.stretch = data.stretch || 1;
+
     // get number of tiles wide and tall - hardcoded to cesium terrain tiles TMS format
     scheme.w = Math.pow(2,lod+1);
     scheme.h = Math.pow(2,lod);
@@ -265,11 +268,12 @@ class TileServer  {
     let tile = scheme.tile;
     let geometry = new THREE.Geometry();
     let world_radius = scheme.world_radius;
+    let stretch = scheme.stretch || 1;
     // build vertices on the surface of a globe given a linear latitude and longitude series of stepped values -> makes evenly distributed spherically points
     for (let i=0; i<tile._uValues.length; i++) {
       let lonrad = tile._uValues[i]*scheme.degrees_lonrad/32767 + scheme.rect.west;
       let latrad = tile._vValues[i]*scheme.degrees_latrad/32767 + scheme.rect.south;
-      let elevation = (((tile._heightValues[i]*(tile._maximumHeight-tile._minimumHeight))/32767.0)+tile._minimumHeight);
+      let elevation = (((tile._heightValues[i]*(tile._maximumHeight-tile._minimumHeight))/32767.0)+tile._minimumHeight)*stretch;
       let v = 0;
       if(world_radius) {
         v = this.ll2v(latrad,lonrad,(world_radius+elevation)*scheme.radius/world_radius);

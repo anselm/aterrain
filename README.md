@@ -25,6 +25,12 @@ Here is an example of the full globe dropped into the basic demo scene. Unfortun
   <img alt="hello world" target="_blank" src="https://github.com/anselm/aterrain/blob/master/examples/assets/hellowebvr_globe.png?raw=true" width="660">
 </a>
 
+Here is an example of the Grand Canyon.
+
+<a href="https://anselm.github.io/aterrain/examples/grandcanyon">
+  <img alt="hello world" target="_blank" src="https://github.com/anselm/aterrain/blob/master/examples/assets/grandcanyon.png?raw=true" width="660">
+</a>
+
 ### API
 
 | Property | Description | Default Value |
