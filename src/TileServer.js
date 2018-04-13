@@ -137,9 +137,9 @@ class TileServer  {
     scheme.building_url = "https://s3.amazonaws.com/cesium-dev/Mozilla/SanFranciscoGltf15Gz/"+scheme.lod+"/"+scheme.xtile+"/"+scheme.ytile+".gltf";
 
     // convenience values
-    scheme.width_world = 2*Math.PI*scheme.world_radius;
-    scheme.width_tile_flat = scheme.width_world / scheme.w;
-    scheme.width_tile_lat = scheme.width_tile_flat * Math.cos(data.lat * Math.PI / 180);
+    // scheme.width_world = 2*Math.PI*scheme.world_radius;
+    // scheme.width_tile_flat = scheme.width_world / scheme.w;
+    // scheme.width_tile_lat = scheme.width_tile_flat * Math.cos(data.lat * Math.PI / 180);
 
     return scheme;
   }
@@ -267,10 +267,15 @@ class TileServer  {
     let world_radius = scheme.world_radius;
     // build vertices on the surface of a globe given a linear latitude and longitude series of stepped values -> makes evenly distributed spherically points
     for (let i=0; i<tile._uValues.length; i++) {
-      let lonrad = tile._uValues[i]/32767*scheme.degrees_lonrad + scheme.rect.west;
-      let latrad = tile._vValues[i]/32767*scheme.degrees_latrad + scheme.rect.south;
+      let lonrad = tile._uValues[i]*scheme.degrees_lonrad/32767 + scheme.rect.west;
+      let latrad = tile._vValues[i]*scheme.degrees_latrad/32767 + scheme.rect.south;
       let elevation = (((tile._heightValues[i]*(tile._maximumHeight-tile._minimumHeight))/32767.0)+tile._minimumHeight);
-      let v = this.ll2v(latrad,lonrad,(world_radius+elevation)*scheme.radius/world_radius);
+      let v = 0;
+      if(world_radius) {
+        v = this.ll2v(latrad,lonrad,(world_radius+elevation)*scheme.radius/world_radius);
+      } else {
+        v = this.ll2v(latrad,lonrad,elevation);
+      }
       geometry.vertices.push(v);
     }
     // vertices to faces

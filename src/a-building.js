@@ -30,7 +30,7 @@ AFRAME.registerComponent('a-building', {
     let scheme = TileServer.instance().scheme_elaborate(data);
     GLTFLoader.load(scheme.building_url,function(gltf) {
       // compute scale if geometric radius differs from planet radius
-      let s = data.radius/data.world_radius;
+      let s = data.world_radius ? data.radius/data.world_radius : 1;
       // multiply size by 10 for some unknown reason
       s = s * 10;
       // apply scale

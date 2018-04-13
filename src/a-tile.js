@@ -28,8 +28,6 @@ AFRAME.registerComponent('a-tile', {
         this.el.setObject3D('mesh',scheme.mesh);
         // mark as complete
         this.el.loaded = 1;
-        // not used - publish a general message that this tile is visible
-        // this.el.emit("a-tile:visible", {lat:data.lat, lon: data.lon, lod:data.lod, id:this.el.id }, false);
         // TODO it would be nice to know better if there were buildings without triggering an error
         if(scheme.lod < 15) return;
         let building = document.createElement('a-entity');

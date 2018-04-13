@@ -24,11 +24,15 @@ body { background:#87CEEB; overflow:hidden;}
                   ">
 </a-entity>
 
-<!-- a bit of a hack here - I'd like to view the world from 4000 meters up in order to get the buildings which are at LOD == 15 right now -->
-<!-- but I want to be closer to the ground which is sea level on the embarcadero -->
+<!-- There are zbuffer and scale issues
+     I want a 1 = 1 meter for a-frame camera coordinates but this means far buildings are too far for the zbuffer
+     It's possible to see most of the city at 2000 meters in the air; but close buildings are zfighting with the ground and not visible.
 
-<a-entity id="cameraRig" position="0 -4000 0">
-  <a-entity id="camera" camera="near:1;far:100000" wasd-controls look-controls orbit-controls></a-entity>
+     If you want you can set the cameraRig to 0 -4000 0 and be at sea level and some of the zfighting is more visible
+ -->
+
+<a-entity id="cameraRig" position="0 0 0">
+  <a-entity id="camera" camera="near:0.00003;far:3000" wasd-controls look-controls orbit-controls></a-entity>
   <a-entity id="lefthand" camera-transform-controls-hand="hand:left" vive-controls="hand: left" oculus-touch-controls="hand: left" windows-motion-controls="hand: left"></a-entity>
   <a-entity id="righthand" camera-transform-controls-hand="hand:right" vive-controls="hand: right" oculus-touch-controls="hand: right" windows-motion-controls="hand: right"></a-entity>
 </a-entity>

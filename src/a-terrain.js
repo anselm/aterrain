@@ -3,6 +3,7 @@ if (typeof AFRAME === 'undefined') {
   throw new Error('Component attempted to register before AFRAME was available.');
 }
 
+// TODO there's no real reason why a-terrain should now about the tileserver - a-tile.js could have a system to return a collection of tiles on demand
 import TileServer from './TileServer.js';
 
 ///
@@ -185,6 +186,11 @@ AFRAME.registerComponent('a-terrain', {
 
     // ask tile server for facts about a given latitude, longitude, lod
     let scheme = TileServer.instance().scheme_elaborate(data);
+
+    // convenience values
+    scheme.width_world = 2*Math.PI*scheme.world_radius;
+    scheme.width_tile_flat = scheme.width_world / scheme.w;
+    scheme.width_tile_lat = scheme.width_tile_flat * Math.cos(data.lat * Math.PI / 180);
 
     // the number of tiles to fetch in each direction is a function of the camera fov (45') and elevation over the size of a tile at current lod
     let count = Math.floor(data.elevation / scheme.width_tile_lat) + 1;

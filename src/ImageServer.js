@@ -131,8 +131,11 @@ class ImageServer {
     // For Mercator, check out Slide 39-43 of Rendering the Whole Wide World on the World Wide Web for some background and reprojectToGeographic() in ImageryLayer.js for how Cesium currently does it.
     // Here the reprojection is done on CPU...
 
+    // circument a quirk with cesium data source
+    let uselod = (this.data.source == 2) ? scheme.lod+1 : scheme.lod+1;
+
     // get image tiles at one level deeper than terrain tiles to take advantage of x lining up
-    let image_lod = Math.pow(2,scheme.lod+1);
+    let image_lod = Math.pow(2,uselod);
 
     // where is the top and bottom tile?
     let ty1 = this.projection2tile(scheme,image_lod,0,0);
@@ -195,6 +198,7 @@ class ImageServer {
     });
   }
 
+  /*
   provideImageUnprojectedUnused(scheme,callback) {
     // here is a version of the image mapper that doesn't do any projection
     let x = scheme.xtile;
@@ -211,6 +215,7 @@ class ImageServer {
       console.error(error);
     });
   }
+  */
 
   provideImage(scheme,callback) {
     this.provideImageProjected(scheme,callback);

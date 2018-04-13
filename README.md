@@ -101,9 +101,8 @@ I'm using a few specific pieces of Cesium (with support from the Cesium team for
 
 ### Todo
 
-  - For the SF case it would be nice to calculate the FOV better and to dynamically load tiles as the player moves around
-  - It would be nice to not just use 0,0,0 but any specified displacement
-  - Some folks want to be able to fly from point A to point B - this could be done by exposing the right hooks into the engine
-  - An #MR use case would be nice; fairly easy to do at this point
-
+  - There is jitter at street level probably due to math scale... what if I generate the tiles with the translation offset already in them?
+  - There is a bug with gltf buildings placement due to custom gltf extensions in Cesium which I am not adhering to
+  - Right now the street level view mode assumes the viewer is at 0,0,0 effectively and this should be variable
+  - Could show an #MR use case
 
