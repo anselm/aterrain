@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="https://aframe.io/releases/0.7.1/aframe.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/webpack-cesium/1.37.0/webpack.cesium.js"></script>
+    <script src="../../dist/aframe-aterrain-component.js"></script>
+    <script>
+
+        CameraUtils_lookAt = function(camera, targetPosition) {
+            var targetPos = camera.worldToLocal(targetPosition.clone());
+            var rotationAxis = new THREE.Vector3().crossVectors(
+                new THREE.Vector3(0, 0, -1),
+                targetPos
+            ).normalize();
+            var angle = new THREE.Vector3(0, 0, -1).angleTo(
+                targetPos.normalize().clone());
+
+            camera.rotateOnAxis(rotationAxis, angle);
+        }
+
+        AFRAME.registerComponent('josh-controls',{
+            schema: {
+                target: {type:'selector'}
+            },
+            init: function() {
+                this.currentLat = 0
+                this.currentLon = 0
+                this.currentAlt = 5000
+                this.targetLat = 0
+                this.targetLon = 0
+                this.targetAlt = 5000
+            },
+            navToLatLon(lat,lon) {
+                function toRad(deg) { return deg/180*Math.PI }
+                const globe = this.data.target.object3D
+                const ang = new THREE.Euler(toRad(lat),-toRad(lon),0)
+                globe.setRotationFromEuler(ang)
+            },
+            setLatLon(lat,lon, alt) {
+                this.targetLat = lat
+                this.targetLon = lon
+                this.targetAlt = alt
+            },
+            tick: function() {
+                if(this.currentLat < this.targetLat-1) this.currentLat+=1
+                if(this.currentLat > this.targetLat+1) this.currentLat-=1
+                if(this.currentLon < this.targetLon-1) this.currentLon+=1
+                if(this.currentLon > this.targetLon+1) this.currentLon-=1
+                this.navToLatLon(this.currentLat,this.currentLon)
+                if(this.currentAlt > this.targetAlt+10) this.currentAlt-=10
+                if(this.currentAlt < this.targetAlt-10) this.currentAlt+=10
+                const pos = this.el.object3D.position
+                pos.z = this.currentAlt
+            },
+            play: function() {
+                this.addEventListeners()
+            },
+            addEventListeners() {
+                // console.log('adding event listeners')
+                const sceneEl = this.el.sceneEl
+                const canvasEl = sceneEl.canvas
+                canvasEl.addEventListener('mousedown', this.onMouseDown, false);
+                window.addEventListener('keydown', (e)=>this.onKeydown(e), false)
+                window.addEventListener('mousemove', this.onMouseMove, false);
+                window.addEventListener('mouseup', this.onMouseUp, false);
+            },
+            onMouseDown: function (evt) {
+                // console.log("mouse down")
+                this.mouseDown = true
+            },
+            onMouseMove: function(evt) {
+                // console.log("mouse move")
+            },
+            onMouseUp: function(evt) {
+                // console.log("mouse up")
+                this.mouseDown = false
+            },
+            onKeydown: function(evt) {
+                console.log("pressed",evt.keyCode)
+                switch(evt.keyCode) {
+                    case 81: { //Q
+                        return this.setLatLon(0,0, 5000)
+                    }
+                    case 87: { //W
+                        return this.setLatLon(0,0,2000)
+                    }
+                    case 69: {
+                        return this.setLatLon(37.78,-122.41,1200)
+                    }
+                    case 37: {
+                        const pos = this.el.object3D.position
+                        pos.x -= 30
+                        CameraUtils_lookAt(this.el.object3D,this.data.target.object3D.position)
+                        break
+                    }
+                    case 38: {
+                        this.el.object3D.position.z -= 30
+                        CameraUtils_lookAt(this.el.object3D,this.data.target.object3D.position)
+                        break
+                    }
+                    case 39: {
+                        this.el.object3D.position.x += 30
+                        CameraUtils_lookAt(this.el.object3D,this.data.target.object3D.position)
+                        break
+                    }
+                    case 40: {
+                        this.el.object3D.position.z += 30
+                        CameraUtils_lookAt(this.el.object3D,this.data.target.object3D.position)
+                        break
+                    }
+                }
+            }
+        })
+    </script>
+</head>
+<body>
+<a-scene>
+    <a-assets>
+        <img id="sky" src="../assets/PIA12348_hires.jpg">
+    </a-assets>
+
+    <a-entity id="world" position="0 0 0" visible="true" a-terrain="radius:1000; observer:camera;">
+    </a-entity>
+    <!--<a-sphere id="world" position="0 0 0" radius="10" color="#ff0000"></a-sphere>-->
+
+
+    <a-entity
+            id="camera"
+            camera="fov: 45; near:0.01; far:10000"
+            position="0 1 5000"
+            josh-controls="target:#world;"
+    >
+    </a-entity>
+
+    <a-entity light="type: directional; color: #fff; intensity: 3" position="-1 1 1"></a-entity>
+    <a-sky src="#sky" radius="4000" color="#6EBAA7" ></a-sky>
+</a-scene>
+
+
+<script type="text/javascript">
+
+</script>
+
+</body>
+</html>
