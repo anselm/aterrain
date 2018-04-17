@@ -48,21 +48,15 @@ Specify the latitude and longitude where you would like to see detail on the sur
 
 #### Browser
 
-Install and use by directly including the [browser files](dist):
+Use in the browser with an html document like so:
 
 ```html
-<head>
-  <title>My A-Frame Scene</title>
-  <script src="https://aframe.io/releases/0.6.0/aframe.min.js"></script>
-  <script src="https://unpkg.com/aframe-aterrain-component/dist/aframe-aterrain-component.min.js"></script>
-</head>
-
-<body>
-  <a-scene cursor="rayOrigin: mouse">
-    <a-entity a-terrain="lat:45.557749; lon:-122.6794; radius:1000; elevation:263727982"></a-entity>
-  </a-scene>
-  <a-entity id="camera" camera="fov:45" mouse-cursor position="0 0 0"></a-entity>
-</body>
+<script src="https://aframe.io/releases/0.7.1/aframe.min.js"></script>
+<script src="https://unpkg.com/aframe-aterrain-component/dist/aframe-aterrain-component.min.js"></script>
+<a-scene>
+<a-entity a-terrain="radius:100; elevation:263727982"></a-entity>
+<a-entity id="camera" camera="fov:45" mouse-cursor position="0 0 500"></a-entity>
+</a-scene>
 ```
 
 #### npm
