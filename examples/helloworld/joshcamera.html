@@ -49,8 +49,8 @@
                 if(this.currentLon < this.targetLon-1) this.currentLon+=1
                 if(this.currentLon > this.targetLon+1) this.currentLon-=1
                 this.navToLatLon(this.currentLat,this.currentLon)
-                if(this.currentAlt > this.targetAlt+10) this.currentAlt-=10
-                if(this.currentAlt < this.targetAlt-10) this.currentAlt+=10
+                if(this.currentAlt > this.targetAlt+30) this.currentAlt-=30
+                if(this.currentAlt < this.targetAlt-30) this.currentAlt+=30
                 const pos = this.el.object3D.position
                 pos.z = this.currentAlt
             },
@@ -84,10 +84,13 @@
                         return this.setLatLon(0,0, 5000)
                     }
                     case 87: { //W
-                        return this.setLatLon(0,0,2000)
+                        return this.setLatLon(0,0,1800)
                     }
                     case 69: {
-                        return this.setLatLon(37.78,-122.41,1200)
+                        return this.setLatLon(37.78,-122.41,1800)
+                    }
+                    case 82: {
+                        return this.setLatLon(37.78,-122.41,1700)
                     }
                     case 37: {
                         const pos = this.el.object3D.position
