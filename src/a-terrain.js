@@ -108,7 +108,9 @@ AFRAME.registerComponent('a-terrain', {
       let d = v1.distanceTo(v2);
 
       // find relative vector of unit length pointing at the observer
-      v2.transformDirection( this.el.object3D.matrixWorld );
+      let m = new THREE.Matrix4();
+      m.getInverse( this.el.object3D.matrixWorld );
+      v2.transformDirection(m);
 
       let lat = Math.asin(v2.y);
       let lon = Math.atan2(v2.x,v2.z);
