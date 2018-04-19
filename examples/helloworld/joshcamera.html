@@ -39,6 +39,7 @@
                 globe.setRotationFromEuler(ang)
             },
             setLatLon(lat,lon, alt) {
+                console.log(`going to ${lat} ${lon} ${alt}`)
                 this.targetLat = lat
                 this.targetLon = lon
                 this.targetAlt = alt
@@ -86,32 +87,26 @@
                     case 87: { //W
                         return this.setLatLon(0,0,1800)
                     }
-                    case 69: {
+                    case 69: {//E
                         return this.setLatLon(37.78,-122.41,1800)
                     }
-                    case 82: {
+                    case 82: {//R
                         return this.setLatLon(37.78,-122.41,1700)
                     }
-                    case 37: {
-                        const pos = this.el.object3D.position
-                        pos.x -= 30
-                        CameraUtils_lookAt(this.el.object3D,this.data.target.object3D.position)
-                        break
+                    case 84: {//T
+                        return this.setLatLon(37.78,-122.41,1300)
                     }
-                    case 38: {
-                        this.el.object3D.position.z -= 30
-                        CameraUtils_lookAt(this.el.object3D,this.data.target.object3D.position)
-                        break
+                    case 37: {//left
+                        return this.setLatLon(this.targetLat, this.targetLon-10,this.targetAlt)
                     }
-                    case 39: {
-                        this.el.object3D.position.x += 30
-                        CameraUtils_lookAt(this.el.object3D,this.data.target.object3D.position)
-                        break
+                    case 38: { //forward
+                        return this.setLatLon(this.targetLat, this.targetLon,this.targetAlt-100)
                     }
-                    case 40: {
-                        this.el.object3D.position.z += 30
-                        CameraUtils_lookAt(this.el.object3D,this.data.target.object3D.position)
-                        break
+                    case 39: {//right
+                        return this.setLatLon(this.targetLat, this.targetLon+10,this.targetAlt)
+                    }
+                    case 40: { //backward
+                        return this.setLatLon(this.targetLat, this.targetLon,this.targetAlt+100)
                     }
                 }
             }
@@ -132,7 +127,7 @@
     <a-entity
             id="camera"
             camera="fov: 45; near:0.01; far:10000"
-            position="0 1 5000"
+            position="0 0 5000"
             josh-controls="target:#world;"
     >
     </a-entity>
