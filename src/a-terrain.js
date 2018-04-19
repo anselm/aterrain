@@ -100,42 +100,33 @@ AFRAME.registerComponent('a-terrain', {
 
     if(observer) {
 
-      // TODO possibly could abuse this instead to get relative lookat
-      //m4.lookAt()
-      //let m4 = new THREE.Matrix4(this.observer_position,planet_position,new Vector3(0,1,0));
+      // get world positions of both objects
+      let v1 = this.el.object3D.getWorldPosition();
+      let v2 = observer.object3D.getWorldPosition();
 
-      // get a matrix representing the observer position relative to this
-      let m1 = observer.object3D.matrixWorld;
-      let m2 = this.el.object3D.matrixWorld;
-      let mat = new THREE.Matrix4();
-      mat = mat.multiplyMatrices(m1,m2);
+      // get distance between them
+      let d = v1.distanceTo(v2);
 
-      // pull out the relative translation and rotation of the observer relative to this
-      let translation = new THREE.Vector3();
-      let quaternion = new THREE.Quaternion();
-      let scale = new THREE.Vector3();
-      mat.decompose(translation, quaternion, scale);
+      // find relative vector of unit length pointing at the observer
+      v2.transformDirection( this.el.object3D.matrixWorld );
 
-      // convert rotation to euler
-      var rotation = new THREE.Euler().setFromQuaternion( quaternion, "YXZ" );
-
-      // get relative observer pose
-      let observer_new_position = translation;
-      let observer_new_rotation = rotation;
+      let lat = Math.asin(v2.y);
+      let lon = Math.atan2(v2.x,v2.z);
   
       // Exit now if no significant change
-      if(this.observer_position && observer_new_position.equals(this.observer_position)) {
+      if(this.previous_distance == d && this.previous_lat == lat && this.previous_lon == lon) {
         return;
       }
-      this.observer_position = observer_new_position;
+      this.previous_distance = d;
+      this.previous_lat = lat;
+      this.previous_lon = lon;
 
       // find planetary coordinate space distance from sealevel of ellipsoid (or a sphere as is the case in this engine)
-      let model_distance = translation.length(); //this.el.object3D.position.distanceTo( this.observer_position );
-      data.elevation = model_distance * data.world_radius / data.radius - data.world_radius;
+      data.elevation = d * data.world_radius / data.radius - data.world_radius;
 
-      // find latitude and longitude
-      data.latitude = -observer_new_rotation.x * 180.0 / Math.PI;
-      data.longitude = observer_new_rotation.y * 180.0 / Math.PI;
+      // go to degrees (for user convenience
+      data.latitude = lat * 180.0 / Math.PI;
+      data.longitude = lon * 180.0 / Math.PI;
 
     }
 
