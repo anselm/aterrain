@@ -49,21 +49,6 @@ AFRAME.registerComponent('a-tile', {
           this.el.object3D.quaternion.premultiply(q);
 
 
-/*
-try {
-this.el.setAttribute('position', {x: offset.x, y: offset.y, z: offset.z }) ;
-console.log(offset);
-console.log(scheme);
-this.el.object3D.updateMatrix();
-console.log(this.el.getAttribute('position'));
-this.el.setAttribute('position', {x: -688, y: 595, z: -412 }) ;
-console.log("whyyy");
-} catch(err) {
-  console.error(err);
-}
-*/
-
-
         }
 
         // mark as complete

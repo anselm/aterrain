@@ -11,16 +11,22 @@ body { background:#87CEEB; overflow:hidden;}
 
 <a-scene camera-transform-controls cursor="rayOrigin: mouse">
 
+<a-entity id="target"></a-entity>
+
+<!-- render the world, focused over this area, with the origin forced to be at 0,0,0 - at 1:1 meter scale... -->
+<!-- renders "from" a height of 400 meters which matches a level of detail of 15 - which is where buildings pop in -->
+
 <a-entity a-terrain="fovpad:1;
                      latitude:37.7983222;
                      longitude:-122.3972797;
-                     elevation:5000;
-                     radius:5000;
+                     elevation:400;
                   ">
 </a-entity>
 
-<a-entity id="cameraRig" position="0 1000 0">
-  <a-entity id="camera" camera="near:0.003;far:3000" wasd-controls look-controls orbit-controls></a-entity>
+<!-- actually the coast near here is 20+ meters or so under ellipsoid sea level according to the data sources -->
+
+<a-entity id="cameraRig" position="0 -428 0" >
+  <a-entity id="camera" camera wasd-controls look-controls orbit-controls></a-entity>
   <a-entity id="lefthand" camera-transform-controls-hand="hand:left" vive-controls="hand: left" oculus-touch-controls="hand: left" windows-motion-controls="hand: left"></a-entity>
   <a-entity id="righthand" camera-transform-controls-hand="hand:right" vive-controls="hand: right" oculus-touch-controls="hand: right" windows-motion-controls="hand: right"></a-entity>
 </a-entity>

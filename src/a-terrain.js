@@ -236,11 +236,10 @@ AFRAME.registerComponent('a-terrain', {
       element = document.createElement('a-entity');
       element.setAttribute('id',scheme.uuid);
       element.setAttribute('a-tile',data);
+      this.el.appendChild(element);
       // set lod and loaded directly on the element right now because getAttribute() appears to sometimes not be set synchronously
       element.lod = data.lod;
       element.loaded = 0;
-      document.querySelector('a-scene').appendChild(element);
-      // this.el.appendChild(element); -> hmmm, need to figure out a better policy... force parent to have a radius of 1?
       this.tiles[scheme.uuid] = element;
     }
   },

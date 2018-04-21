@@ -12,12 +12,12 @@ body { background:#80a0f0; overflow:hidden;}
 
 <a-scene cursor="rayOrigin: mouse">
 
-<a-sphere id="target" radius="1000" color="tomato" wireframe="true"></a-sphere>
 
-<a-entity a-terrain="fovpad:8; latitude:37; longitude:-122; radius:1000; elevation:580000"></a-entity>
-
-<a-entity a-location="lat:37.8003222; lon:-122.3972797; radius:1020;">
-  <a-sphere radius="10" color="green"></a-sphere>
+<a-entity a-terrain="follow:0; fovpad:2; latitude:37; longitude:-122; radius:1000; elevation:580000">
+  <a-sphere id="target" radius="1000" color="tomato" wireframe="true"></a-sphere>
+  <a-entity a-location="lat:37.8003222; lon:-122.3972797; radius:1020;">
+    <a-sphere radius="10" color="green"></a-sphere>
+  </a-entity>
 </a-entity>
 
 
