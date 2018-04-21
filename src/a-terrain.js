@@ -17,10 +17,10 @@ AFRAME.registerComponent('a-terrain', {
   schema: {
     // World radius is the physical size of the planet in question. The current default is Earth with a radius of 63727982 meters.
     // TODO Earth is an oblate spheriod but I'm ignoring that fact... it could be improved.
-    world_radius:     {type: 'number', default: 63727982    },
+    world_radius:     {type: 'number', default: 6372798.2    },
     // Radius is the geometric half width or height (or distance from surface to the center) of entire planet in a-frame.
     // A user can use any radius and the planet will render correctly but at a radius == world_radius then the world is 1:1 with human scale walking and a-frame default camera setup
-    radius:           {type: 'number', default: 63727982    },
+    radius:           {type: 'number', default: 6372798.2    },
     // Observer
     // An observer may be null or may be a camera or other aframe 3d object with a position in 3d space that this component should watch
     // If an observer exists then the { latitude, longitude, elevation, lod } will be manufactured dynamically every frame.
@@ -37,21 +37,18 @@ AFRAME.registerComponent('a-terrain', {
     // Note if the observer is set then these below values are ignored and they are dynamically manufactured by looking at observers relative position
     latitude:         {type: 'number', default: 37.7983222  },
     longitude:        {type: 'number', default: -122.3972797},
-    elevation:        {type: 'number', default: 6000   },
+    elevation:        {type: 'number', default: 60000       },
     // How much to stretch planet heights by so that mountains are more visible
-    // TODO not implemented
+    // TODO not fully implemented
     stretch:          {type: 'number', default: 1           },
-    // A target position to seek to if not (0,0,0) - the step rate is the fraction of the distance to cover every step for speed and nice ease in/out
-    target_latitude:  {type: 'number', default: 0           },
-    target_longitude: {type: 'number', default: 0           },
-    target_elevation: {type: 'number', default: 0           },
-    target_steprate:  {type: 'number', default: 0.1         },
+    // have tiles project into the world properly
+    project:          {type: 'number', default: 1           },
     // LOD = Level of detail. This is for internal use only and is manufactured from the elevation. 15 = the first level where 3d building geometry is allowed to be seen.
     lod:              {type: 'number', default: 15          },
     // fovpad is a hack to circumvent limits with observer field of view; basically a camera could be near the planet but see the whole planet at once
     // TODO the tilings strategy should be improved to deal with some of the possible cases of observer field of view - remove this fudge factor later
     fovpad:           {type: 'number', default: 0           },
-    debug:            {type: 'number', default: 0           }
+    debug:            {type: 'number', default: 0           },
   },
 
   ///
@@ -134,12 +131,6 @@ AFRAME.registerComponent('a-terrain', {
 
     else {
 
-      // If there's a target latitude and longitude then slerp to it - TODO improve -> use the frame rate timing to avoid any timing slow down issues
-      if(data.target_latitude || data.target_longitude || data.target_elevation) {
-        data.latitude += ( data.target_latitude - data.latitude ) * data.target_steprate;
-        data.longitude += ( data.target_longitude - data.longitude ) * data.target_steprate;
-        data.elevation += ( data.target_elevation - data.elevation ) * data.target_steprate;
-      }
 
       if(data.follow & 1) {
 
@@ -186,7 +177,7 @@ AFRAME.registerComponent('a-terrain', {
     data.lod = TileServer.instance().elevation2lod(data.world_radius,data.elevation);
 
     // Copy user values to internal
-    // TODO remove this by code cleanup later
+    // TODO remove this by code cleanup later - naming inconsistencies
     data.lat = data.latitude;
     data.lon = data.longitude;
 
@@ -217,7 +208,8 @@ AFRAME.registerComponent('a-terrain', {
                         lod:data.lod,
                     stretch:data.stretch,
                      radius:data.radius,
-               world_radius:data.world_radius
+               world_radius:data.world_radius,
+                    project:1,
                       };
         // hack terrible code TODO cough forever loop
         while(scratch.lon < -180) scratch.lon += 360;
@@ -247,7 +239,8 @@ AFRAME.registerComponent('a-terrain', {
       // set lod and loaded directly on the element right now because getAttribute() appears to sometimes not be set synchronously
       element.lod = data.lod;
       element.loaded = 0;
-      this.el.appendChild(element);
+      document.querySelector('a-scene').appendChild(element);
+      // this.el.appendChild(element); -> hmmm, need to figure out a better policy... force parent to have a radius of 1?
       this.tiles[scheme.uuid] = element;
     }
   },

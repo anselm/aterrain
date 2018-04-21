@@ -18,7 +18,7 @@ AFRAME.registerComponent('a-location', {
        lat: {type: 'number', default:  0},
        lon: {type: 'number', default:  0},
     radius: {type: 'number', default:  1},
-    world_radius: {type: 'number', default:  63727982},
+    world_radius: {type: 'number', default:  6372798.2},
   },
   init: function() {
     let scheme = TileServer.instance().scheme_elaborate(this.data);

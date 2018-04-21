@@ -86,7 +86,7 @@ class ImageServer {
 
   constructor() {
     this.data = {};
-    this.data.debug = true;
+    this.data.debug = false;
     //this.data.mapStyle = Cesium.BingMapsStyle.AERIAL;
     this.data.source = 0;
     if(this.data.source == 0) {
@@ -198,25 +198,6 @@ class ImageServer {
     });
   }
 
-  /*
-  provideImageUnprojectedUnused(scheme,callback) {
-    // here is a version of the image mapper that doesn't do any projection
-    let x = scheme.xtile;
-    let y = scheme.ytile;
-    let lod = scheme.lod;
-    let p1 = this.imageProvider.requestImage(x,y+y,lod+1);
-    let p2 = this.imageProvider.requestImage(x,y+y+1,lod+1);
-    Promise.all([p1,p2]).then( results => {
-      let canvas = this.canvas_new();
-      this.canvas_paint(canvas,results[0],{x1:0,y1:0,x2:256,y2:128});
-      this.canvas_paint(canvas,results[1],{x1:0,y1:128,x2:256,y2:128});
-      callback(this.canvas_to_material(canvas));
-    }, function(error) {
-      console.error(error);
-    });
-  }
-  */
-
   provideImage(scheme,callback) {
     this.provideImageProjected(scheme,callback);
   }
@@ -238,20 +219,6 @@ class ImageServer {
     return canvas;
   }
 
-  canvas_paint(canvas,image,extent) {
-    let debug = this.data.debug;
-    canvas.ctx.drawImage(image,extent.x1,extent.y1,extent.x2,extent.y2);
-    if(debug) {
-      let ctx = canvas.ctx;
-      ctx.beginPath();
-      ctx.lineWidth="6";
-      ctx.strokeStyle="red";
-      ctx.rect(0,0,255,255); 
-      ctx.stroke();
-    }
-    return canvas;
-  }
-
   canvas_from_image(image) {
     if(image.canvas) return;
     image.canvas = document.createElement('canvas');
@@ -265,6 +232,16 @@ class ImageServer {
   }
 
   canvas_to_material(canvas) {
+
+    if(this.data.debug) {
+      let ctx = canvas.ctx;
+      ctx.beginPath();
+      ctx.lineWidth="6";
+      ctx.strokeStyle="red";
+      ctx.rect(0,0,255,255); 
+      ctx.stroke();
+    }
+
     //let material = new THREE.MeshPhongMaterial( { color:0xffffff, wireframe:false });
     let material = new THREE.MeshLambertMaterial( { color:0xffffff, wireframe:false }); //shading: THREE.SmoothShading});
     material.map = new THREE.Texture(canvas);

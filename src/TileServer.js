@@ -2,7 +2,9 @@
 import ImageServer from './ImageServer.js';
 
 ///
-/// TileServer is intended to be a prototypical elevation tile provider - it wraps Cesium tiles
+/// TileServer
+///
+/// Provides a generic interface to height field based tiles.
 /// The philosophy here is that if you want to implement a different data source then you write a separate class.
 /// TODO change this to an aframe-system
 /// TODO ellipsoid is spherical and should be oblate
@@ -33,7 +35,7 @@ class TileServer  {
   }
 
   getGround(data,callback) {
-    // TODO replace with custom elevation derivation - see findClosestElevation() - but it needs to interpolate still
+    // TODO replace with custom height derivation - see findClosestElevation() - but it needs to interpolate still
     let scope = this;
     let poi = Cesium.Cartographic.fromDegrees(data.lon,data.lat);
     Cesium.sampleTerrain(scope.terrainProvider,data.lod,[poi]).then(function(groundResults) {
@@ -71,6 +73,16 @@ class TileServer  {
     if(lod < 0) lod = 0;
     if(lod > 19) lod = 19;
     return lod;
+  }
+
+  ll2v(latrad,lonrad,r=1) {
+    // given a latitude and longitude in radians return a vector
+    let phi = Math.PI/2-latrad;
+    let theta = Math.PI/2+lonrad;
+    let x = -r*Math.sin(phi)*Math.cos(theta);
+    let z = r*Math.sin(phi)*Math.sin(theta);
+    let y = r*Math.cos(phi);
+    return new THREE.Vector3(x,y,z);
   }
 
   scheme_elaborate(data) {
@@ -117,15 +129,15 @@ class TileServer  {
     // TODO must generate custom schemes for multiple simultaneous globes on the same aframe app
     scheme.uuid = "tile-"+scheme.xtile+"-"+scheme.ytile+"-"+lod;
 
-    // position in radians
+    // radian version of non-quantized exact position (will be somewhere inside of the quantized latitude and longitude extent)
     scheme.lonrad = scheme.lon * Math.PI / 180;
     scheme.latrad = scheme.lat * Math.PI / 180;
 
-    // extents in radians
-    let a = ( (scheme.xtile + 0) * 360 / scheme.w - 180   ) * Math.PI / 180;
-    let b = ( (scheme.xtile + 1) * 360 / scheme.w - 180   ) * Math.PI / 180;
-    let c = ( - (scheme.ytile+0) * 180 / scheme.h + 90    ) * Math.PI / 180;
-    let d = ( - (scheme.ytile+1) * 180 / scheme.h + 90    ) * Math.PI / 180;
+    // exact corners in radians where 0,0 is the equator off of africa
+    let a = -Math.PI   + (scheme.xtile + 0) * Math.PI * 2 / scheme.w;
+    let b = -Math.PI   + (scheme.xtile + 1) * Math.PI * 2 / scheme.w;
+    let c =  Math.PI/2 - (scheme.ytile+0) * Math.PI / scheme.h;
+    let d =  Math.PI/2 - (scheme.ytile+1) * Math.PI / scheme.h;
     scheme.rect = { west:a, south:d, east:b, north:c };
 
     // degrees of coverage in radiams
@@ -140,21 +152,11 @@ class TileServer  {
     scheme.building_url = "https://s3.amazonaws.com/cesium-dev/Mozilla/SanFranciscoGltf15Gz/"+scheme.lod+"/"+scheme.xtile+"/"+scheme.ytile+".gltf";
 
     // convenience values
-    // scheme.width_world = 2*Math.PI*scheme.world_radius;
-    // scheme.width_tile_flat = scheme.width_world / scheme.w;
-    // scheme.width_tile_lat = scheme.width_tile_flat * Math.cos(data.lat * Math.PI / 180);
+    scheme.width_world = 2*Math.PI*scheme.world_radius;
+    scheme.width_tile_flat = scheme.width_world / scheme.w;
+    scheme.width_tile_lat = scheme.width_tile_flat * Math.cos(data.lat * Math.PI / 180);
 
     return scheme;
-  }
-
-  ll2v(latrad,lonrad,r=1) {
-    // given a latitude and longitude in radians return a vector
-    let phi = Math.PI/2-latrad;
-    let theta = Math.PI/2+lonrad;
-    let x = -r*Math.sin(phi)*Math.cos(theta);
-    let z = r*Math.sin(phi)*Math.sin(theta);
-    let y = r*Math.cos(phi);
-    return new THREE.Vector3(x,y,z);
   }
 
   /*
@@ -192,13 +194,15 @@ class TileServer  {
          sinLatitude = Math.sin(latitude);
         let mercatorY = 0.5 * Math.log((1.0 + sinLatitude) / (1.0 - sinLatitude));
         let mercatorFraction = (mercatorY - southMercatorY) * oneOverMercatorHeight;
-        console.log("lat = "+latitude+" sinlat="+sinLatitude+" mercfract=" + mercatorFraction);
       //}
     }
   }
   */
 
+  /*
   toGeometryIdealized(scheme) {
+
+    // OBSOLETE
 
     // prepare to build a portion of the hull of the surface of the planet - this will be a curved mesh of x by y resolution (see below)
     let geometry = new THREE.Geometry();
@@ -258,31 +262,71 @@ class TileServer  {
     geometry.computeFaceNormals();
     return geometry;
   }
+  */
 
   toGeometry(scheme) {
 
-    // In cesium this is done on GPU - which is not an option sadly due to game collisions and physics - see:
+    //
+    // see https://github.com/AnalyticalGraphicsInc/quantized-mesh
+    //
+    // note in cesium this is done on GPU - which is not an option sadly due to game collisions and physics - see:
     //    EncodedCartesian3.js
     //    translateRelativeToEye.glsl
 
     let tile = scheme.tile;
-    let geometry = new THREE.Geometry();
+    let radius = scheme.radius;
     let world_radius = scheme.world_radius;
     let stretch = scheme.stretch || 1;
-    // build vertices on the surface of a globe given a linear latitude and longitude series of stepped values -> makes evenly distributed spherically points
+
+    // a slightly laborious way - help rotate vertices in the tile so that they're actually at the equator (at 0,0 lat lon)
+    let angle1 = scheme.rect.south;
+    let angle2 = scheme.rect.west;
+    let axis1 = new THREE.Vector3(1,0,0);
+    let axis2 = new THREE.Vector3(0,1,0);
+
+    // store this here for now (it helps with building height)
+    scheme.average_height = 0;
+
+    // calculate vertices
+    let vertices = [];
     for (let i=0; i<tile._uValues.length; i++) {
-      let lonrad = tile._uValues[i]*scheme.degrees_lonrad/32767 + scheme.rect.west;
-      let latrad = tile._vValues[i]*scheme.degrees_latrad/32767 + scheme.rect.south;
-      let elevation = (((tile._heightValues[i]*(tile._maximumHeight-tile._minimumHeight))/32767.0)+tile._minimumHeight)*stretch;
-      let v = 0;
-      if(world_radius) {
-        v = this.ll2v(latrad,lonrad,(world_radius+elevation)*scheme.radius/world_radius);
-      } else {
-        v = this.ll2v(latrad,lonrad,elevation);
-      }
-      geometry.vertices.push(v);
+      // find exact latitude - it's important to consider the offset from the poles due to narrowing there
+      let z = tile._vValues[i]/32767*scheme.degrees_latrad + scheme.rect.south;
+      // find ~latitude - just take a GMT centered straddle so it reduces labor later on because I want this centered at 0,0,0
+      let x = (tile._uValues[i]/32767)*scheme.degrees_lonrad + scheme.rect.west;
+      // get height values in meters from the earths center above sea level (actually SF itself is about 24m below sea level)
+      let y = (((tile._heightValues[i]*(tile._maximumHeight-tile._minimumHeight))/32767.0)+tile._minimumHeight)*stretch;
+
+      // accumulate average height
+      scheme.average_height += y / tile._uValues.length;
+
+      // convert latitude, longitude and height to a position on the earths surface that will be at [ latitude,0 ]
+      // TODO this could take into account the ellipsoid rather than being a perfect sphere
+      let v = this.ll2v(z,x,y+world_radius);
+
+      // scale down  the rendering radius
+      v.x = v.x / world_radius * radius;
+      v.y = v.y / world_radius * radius;
+      v.z = v.z / world_radius * radius;
+
+      // slide the tile horizontally to be centered vertically on GMT
+      v.applyAxisAngle(axis2,-scheme.rect.west - scheme.degrees_lonrad / 2 );
+
+      // slide the tile vertically to be centered vertically on 0,0
+      v.applyAxisAngle(axis1,scheme.rect.south + scheme.degrees_latrad / 2 );
+
+      // in model space - center the vertices so that the entire tile is at the origin 0,0,0 in cartesian coordinates
+      v.z -= radius;
+
+      // save vertex
+      vertices.push(v);
     }
-    // vertices to faces
+
+    // build geometry
+    let geometry = new THREE.Geometry();
+    // build vertices
+    geometry.vertices = vertices;
+    // build faces
     for (let i=0; i<tile._indices.length-1; i=i+3) {
       geometry.faces.push(new THREE.Face3(tile._indices[i], tile._indices[i+1], tile._indices[i+2]));
     }
@@ -298,10 +342,12 @@ class TileServer  {
       let vyc = tile._vValues[faces[i].c]/32767;
       geometry.faceVertexUvs[0].push([ new THREE.Vector2(vxa,vya), new THREE.Vector2(vxb,vyb), new THREE.Vector2(vxc,vyc) ]);
     }
+    // return geometry
     geometry.uvsNeedUpdate = true;
-    // normals
     geometry.computeVertexNormals();
     geometry.computeFaceNormals();
+    geometry.computeBoundingBox();
+    geometry.computeBoundingSphere();
     return geometry;
   }
 
