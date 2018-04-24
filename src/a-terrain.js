@@ -49,7 +49,7 @@ AFRAME.registerComponent('a-terrain', {
     // TODO the tilings strategy should be improved to deal with some of the possible cases of observer field of view - remove this fudge factor later
     fovpad:           {type: 'number', default: 0           },
     debug:            {type: 'number', default: 0           },
-    building_url:     {type: 'string', default: 'https://s3.amazonaws.com/cesium-dev/Mozilla/SanFranciscoGltf15Gz'  },
+    building_url:     {type: 'string', default: 'https://s3.amazonaws.com/cesium-dev/Mozilla/SanFranciscoGltf15Gz1'  },
     building_flags:   {type: 'number', default: 2           }
   },
 

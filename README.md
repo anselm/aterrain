@@ -110,12 +110,12 @@ I'm using a few specific pieces of Cesium (with support from the Cesium team for
 
 ### Remaining areas for improvement (April 22 2018)
 
-  - Right now the street level view mode is implicitly triggered if no target is set & assumes the viewer is at 0,0,0 effectively and this should be adjustable.
+  - There's a street level view that is automatically enabled if no camera is set as a target for a-terrain; more options here would be nice.
   - It's pretty easy to replace the Cesium zig-zag terrain decoder and in which case the entire engine would be more portable
   - There's a lot of small cleanup, marked with TODO 
   - Since ES6 is supported in browser - a compile step could be made optional
   - I have a 'stretch' attribute which should also be applied to camera position (or else camera can go under the ground)
-  - The ground elevation coudl also be used better for helping camera from going under ground (it's not really used at all)
+  - The ground elevation could also be used better for helping camera from going under ground (it's not really used at all)
   - All data urls should be pushed up to the aterrain variables rather than buried in Image or Terrain components
   - There's a list of other bugs on the github
   - a-buildings should not be attached to a-tiles but should also be optionally totally independent so they can show up at lower levels of detail

@@ -286,10 +286,10 @@ class TileServer  {
       v.z = v.z / world_radius * radius;
 
       // slide the tile horizontally to be centered vertically on GMT - TODO this is computationally sloppy and could be vastly optimized
-      v.applyAxisAngle(axis2,-scheme.rect.west - scheme.degrees_lonrad / 2 );
+      v.applyAxisAngle(axis2,-scheme.rect.west); //- scheme.degrees_lonrad / 2 ); // (used to center but now am leaving at corner)
 
       // slide the tile vertically to be centered vertically on 0,0 - TODO could be done more cleanly at less cost
-      v.applyAxisAngle(axis1,scheme.rect.south + scheme.degrees_latrad / 2 );
+      v.applyAxisAngle(axis1,scheme.rect.south);// + scheme.degrees_latrad / 2 ); // (used to center but now am leaving at corner)
 
       // in model space - center the vertices so that the entire tile is at the origin 0,0,0 in cartesian coordinates
       v.z -= radius;

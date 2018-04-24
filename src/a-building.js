@@ -25,8 +25,8 @@ AFRAME.registerComponent('a-building', {
          stretch: {type: 'number', default: 1},
           radius: {type: 'number', default: 6372798.2},
     world_radius: {type: 'number', default: 6372798.2},
-    //building_url: {type: 'string', default: 'https://s3.amazonaws.com/cesium-dev/Mozilla/SanFranciscoGltf15Gz1' },
-    building_url: {type: 'string', default: 'https://s3.amazonaws.com/cesium-dev/Mozilla/SanFranciscoGltf15Gz' },
+    building_url: {type: 'string', default: 'https://s3.amazonaws.com/cesium-dev/Mozilla/SanFranciscoGltf15Gz1' },
+    //building_url: {type: 'string', default: 'https://s3.amazonaws.com/cesium-dev/Mozilla/SanFranciscoGltf15Gz' }, // older format
   building_flags: {type: 'number', default: 2 } ,
   },
   init: function () {
@@ -43,11 +43,6 @@ AFRAME.registerComponent('a-building', {
 
       // apply scale
       this.el.object3D.scale.set(s,s,s);
-
-      if(data.building_flags & 1) {
-        // center?
-        this.el.object3D.position.set(-scheme.width_tile_flat/2,-scheme.width_tile_lat/2,0);
-      }
 
       if(data.building_flags & 2) {
         // Buildings arrive rotated in 3d space as if they were being plunked onto the planet as is - also for a different cartesian XYZ axis
