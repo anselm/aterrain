@@ -27,7 +27,7 @@ AFRAME.registerComponent('a-building', {
     world_radius: {type: 'number', default: 6372798.2},
     //building_url: {type: 'string', default: 'https://s3.amazonaws.com/cesium-dev/Mozilla/SanFranciscoGltf15Gz1' },
     building_url: {type: 'string', default: 'https://s3.amazonaws.com/cesium-dev/Mozilla/SanFranciscoGltf15Gz' },
-           flags: {type: 'number', default: 2 } ,
+  building_flags: {type: 'number', default: 2 } ,
   },
   init: function () {
     let data = this.data;
@@ -44,12 +44,12 @@ AFRAME.registerComponent('a-building', {
       // apply scale
       this.el.object3D.scale.set(s,s,s);
 
-      if(data.flags & 1) {
+      if(data.building_flags & 1) {
         // center?
         this.el.object3D.position.set(-scheme.width_tile_flat/2,-scheme.width_tile_lat/2,0);
       }
 
-      if(data.flags & 2) {
+      if(data.building_flags & 2) {
         // Buildings arrive rotated in 3d space as if they were being plunked onto the planet as is - also for a different cartesian XYZ axis
         // I prefer to remove that rotation so that they're facing outwards from longitude 0 latitude 0
         // (I suppose there's an ordered euler transform helper that could do this instead TODO)

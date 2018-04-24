@@ -49,6 +49,8 @@ AFRAME.registerComponent('a-terrain', {
     // TODO the tilings strategy should be improved to deal with some of the possible cases of observer field of view - remove this fudge factor later
     fovpad:           {type: 'number', default: 0           },
     debug:            {type: 'number', default: 0           },
+    building_url:     {type: 'string', default: 'https://s3.amazonaws.com/cesium-dev/Mozilla/SanFranciscoGltf15Gz'  },
+    building_flags:   {type: 'number', default: 2           }
   },
 
   ///
@@ -141,6 +143,8 @@ AFRAME.registerComponent('a-terrain', {
 
     }
 
+    // TODO don't call this if no changes - it's not super expensive to call anyway but is sloppy
+
     /*
     // This is a callback to force the view above the ground.
     // TODO this cannot be used because I cannot control the users camera - it needs a rethink - there are fundamental design tensions.
@@ -188,6 +192,8 @@ AFRAME.registerComponent('a-terrain', {
                     stretch:data.stretch,
                      radius:data.radius,
                world_radius:data.world_radius,
+               building_url:data.building_url,
+               building_flags:data.building_flags,
                     project:1,
                       };
         // hack terrible code TODO cough forever loop
@@ -195,7 +201,6 @@ AFRAME.registerComponent('a-terrain', {
         while(scratch.lon >= 180) scratch.lon -= 360;
         while(scratch.lat < -90) scratch.lat += 180;
         while(scratch.lat >= 90) scratch.lat -= 180;
-        // make tile
         this.updateOrCreateTile(scratch);
       }
     }
