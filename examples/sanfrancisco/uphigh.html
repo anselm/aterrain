@@ -1,55 +1,40 @@
 
 <!-- scripts -->
 <script src="https://aframe.io/releases/0.7.1/aframe.min.js"></script>
-<script src="../js/aframe-orbit-controls-component.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/webpack-cesium/1.37.0/webpack.cesium.js"></script>
 <script src="../../dist/aframe-aterrain-component.js"></script>
-<script src="https://unpkg.com/aframe-environment-component@1.0.0/dist/aframe-environment-component.min.js"></script>
+<script src="https://fernandojsg.github.io/aframe-camera-transform-controls-component/dist/aframe-camera-transform-controls-component.min.js"></script>
 
 <style>
-body { background:#101010; overflow:hidden;}
+body { background:#87CEEB; overflow:hidden;}
 </style>
 
-<a-scene cursor="rayOrigin: mouse">
+<a-scene camera-transform-controls cursor="rayOrigin: mouse">
 
-<a-assets>
-<img id="sky" src="../assets/PIA12348_hires.jpg">
-</a-assets>
+<a-entity id="target"></a-entity>
 
-<a-entity id="world" gltf-model="url(./9502.gltf)" rotation="45 0 0" ></a-entity>
-<a-entity id="world1" gltf-model="url(./box1.gltf)" rotation="0 0 0" scale="10 10 10"></a-entity>
-<a-entity id="world2" gltf-model="url(./box2.glb)" rotation="0 0 0" sclae="10 10 10"></a-entity>
+<!-- render the world, focused over this area, with the origin forced to be at 0,0,0 - at 1:1 meter scale... -->
+<!-- renders "from" a height of 400 meters which matches a level of detail of 15 - which is where buildings pop in -->
 
-<a-sphere radius="10" color="tomato"></a-sphere>
-
-<a-box color="green" wireframe=true width="256" height="256" depth="1"></a-box>
-
-<a-entity id="cameraRig">
-<a-entity
-    id="camera"
-    camera="fov: 45; near:0.01; far:10000"
-    position="0 1 1000"
-    orbit-controls="
-        autoRotate: false;
-        target: #world;
-        enableDamping: true;
-        dampingFactor: 0.125;
-        rotateSpeed:0.10;
-        minDistance:0;
-        maxDistance:5000;
-        minPolarAngle:0.1;
-        maxPolarAngle:3.04159265359;
-        enableProportionalVelocity:true;
-    ">
-</a-entity>
-<a-entity id="lefthand" camera-transform-controls-hand="hand:left" vive-controls="hand: left" oculus-touch-controls="hand: left" windows-motion-controls="hand: left"></a-entity>
-<a-entity id="righthand" camera-transform-controls-hand="hand:right" vive-controls="hand: right" oculus-touch-controls="hand: right" windows-motion-controls="hand: right"></a-entity>
+<a-entity a-terrain="fovpad:1;
+                     latitude:37.7983222;
+                     longitude:-122.3972797;
+                     elevation:400;
+                  ">
 </a-entity>
 
-<!-- it's helpful to set the lighting ourselves -->
-<a-entity light="type: directional; color: #EED; intensity: 3" position="-1 1 1"></a-entity>
+<!-- actually the coast near here is 20+ meters or so under ellipsoid sea level according to the data sources -->
 
-<a-sky src="" radius="4000" color="white" ></a-sky>
+<a-entity id="cameraRig" position="0 400 0" >
+  <a-entity id="camera" camera wasd-controls look-controls orbit-controls></a-entity>
+  <a-entity id="lefthand" camera-transform-controls-hand="hand:left" vive-controls="hand: left" oculus-touch-controls="hand: left" windows-motion-controls="hand: left"></a-entity>
+  <a-entity id="righthand" camera-transform-controls-hand="hand:right" vive-controls="hand: right" oculus-touch-controls="hand: right" windows-motion-controls="hand: right"></a-entity>
+</a-entity>
+
+
+<a-light type="directional" color="#ffffff" intensity="1" position="-1 1 1"></a-light>
+<a-light type="ambient" color="#444444"></a-light>
+<a-light type="point" intensity="1" position="2 4 4"></a-light>
 
 </a-scene>
 

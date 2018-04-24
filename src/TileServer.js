@@ -11,40 +11,19 @@ import ImageServer from './ImageServer.js';
 
 class TileServer  {
  
-  constructor() {
-
-    // cesium terrain is not in mercator -> https://cesiumjs.org/releases/1.2/Build/Documentation/GeographicTilingScheme.html
-
-    this.data = {};
-    this.data.ellipsoid = new Cesium.Ellipsoid(1,1,1);
-    this.data.requestVertexNormals = true;
-    this.data.url = "https://assets.agi.com/stk-terrain/v1/tilesets/world/tiles";
-
-    // TODO study -> there seem to be more missing tiles here - don't use this source for now?
-    //this.data.CesiumionAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYmI0ZmY0My1hOTg5LTQzNWEtYWRjNy1kYzYzNTM5ZjYyZDciLCJpZCI6NjksImFzc2V0cyI6WzM3MDQsMzcwMywzNjk5LDM2OTNdLCJpYXQiOjE1MTY4MzA4ODZ9.kM-JnlG-00e7S_9fqS_QpXYTg7y5-cIEcZEgxKwRt5E';
-    //this.data.url = 'https://beta.cesium.com/api/assets/3699?access_token=' + this.data.CesiumionAccessToken;
-
-    this.terrainProvider = new Cesium.CesiumTerrainProvider(this.data);
-
-  }
-
-  ready(callback) {
-    Cesium.when(this.terrainProvider.readyPromise).then( unused => {
-      ImageServer.instance().ready(callback);
-    });
-  }
-
   getGround(data,callback) {
     // TODO replace with custom height derivation - see findClosestElevation() - but it needs to interpolate still
-    let scope = this;
-    let poi = Cesium.Cartographic.fromDegrees(data.lon,data.lat);
-    Cesium.sampleTerrain(scope.terrainProvider,data.lod,[poi]).then(function(groundResults) {
-      callback(groundResults[0].height);
+    Cesium.when(this.terrainProvider.readyPromise).then( () => {
+      let poi = Cesium.Cartographic.fromDegrees(data.lon,data.lat);
+      Cesium.sampleTerrain(this.terrainProvider,data.lod,[poi]).then(function(groundResults) {
+        callback(groundResults[0].height);
+      });
     });
   }
 
   findClosestElevation(scheme) {
     // TODO may want to actually interpolate rather than merely taking the closest elevation...
+    if(!scheme.tile) return 0;
     let tile = scheme.tile;
     let distance = Number.MAX_SAFE_INTEGER;
     let best = 0;
@@ -147,9 +126,6 @@ class TileServer  {
     // degrees of coverage
     scheme.degrees_lon = 360 / scheme.w; 
     scheme.degrees_lat = 180 / scheme.h;
-
-    // TODO make this a parameter
-    scheme.building_url = "https://s3.amazonaws.com/cesium-dev/Mozilla/SanFranciscoGltf15Gz/"+scheme.lod+"/"+scheme.xtile+"/"+scheme.ytile+".gltf";
 
     // convenience values
     scheme.width_world = 2*Math.PI*scheme.world_radius;
@@ -309,10 +285,10 @@ class TileServer  {
       v.y = v.y / world_radius * radius;
       v.z = v.z / world_radius * radius;
 
-      // slide the tile horizontally to be centered vertically on GMT
+      // slide the tile horizontally to be centered vertically on GMT - TODO this is computationally sloppy and could be vastly optimized
       v.applyAxisAngle(axis2,-scheme.rect.west - scheme.degrees_lonrad / 2 );
 
-      // slide the tile vertically to be centered vertically on 0,0
+      // slide the tile vertically to be centered vertically on 0,0 - TODO could be done more cleanly at less cost
       v.applyAxisAngle(axis1,scheme.rect.south + scheme.degrees_latrad / 2 );
 
       // in model space - center the vertices so that the entire tile is at the origin 0,0,0 in cartesian coordinates
@@ -352,15 +328,25 @@ class TileServer  {
   }
 
   produceTile(data,callback) {
-    let scheme = this.scheme_elaborate(data);
-    this.imageProvider = ImageServer.instance(); // not the most elegant... TODO move? have a parent wrapper for both providers?
-    this.imageProvider.provideImage(scheme, material => {
-      scheme.material = material;
-      Cesium.when(this.terrainProvider.requestTileGeometry(scheme.xtile,scheme.ytile,scheme.lod),tile => {
-        scheme.tile = tile;
-        scheme.geometry = this.toGeometry(scheme); // this.toGeometryIdealized(scheme);
-        scheme.mesh = new THREE.Mesh(scheme.geometry,scheme.material);
-        callback(scheme);
+
+    if(!this.terrainProvider) {
+      // TODO arguably this should be set once globally in a setter method because changing providers mid-flight is a bit weird
+      this.terrainProvider = new Cesium.CesiumTerrainProvider({ ellipsoid:new Cesium.Ellipsoid(1,1,1), requestVertexNormals:true, url:data.url });
+    }
+
+    Cesium.when(this.terrainProvider.readyPromise).then( () => {
+      ImageServer.instance().ready( () => {
+        let scheme = this.scheme_elaborate(data);
+        this.imageProvider = ImageServer.instance(); // not the most elegant... TODO move? have a parent wrapper for both providers?
+        this.imageProvider.provideImage(scheme, material => {
+          scheme.material = material;
+          Cesium.when(this.terrainProvider.requestTileGeometry(scheme.xtile,scheme.ytile,scheme.lod),tile => {
+            scheme.tile = tile;
+            scheme.geometry = this.toGeometry(scheme); // this.toGeometryIdealized(scheme);
+            scheme.mesh = new THREE.Mesh(scheme.geometry,scheme.material);
+            callback(scheme);
+          });
+        });
       });
     });
   }

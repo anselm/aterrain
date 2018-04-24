@@ -3,7 +3,7 @@ if (typeof AFRAME === 'undefined') {
   throw new Error('Component attempted to register before AFRAME was available.');
 }
 
-// TODO there's no real reason why a-terrain should now about the tileserver - a-tile.js could have a system to return a collection of tiles on demand
+// TODO there's no real reason why a-terrain should know about the tileserver - a-tile.js could have a system to return a collection of tiles on demand
 import TileServer from './TileServer.js';
 
 ///
@@ -63,23 +63,9 @@ AFRAME.registerComponent('a-terrain', {
   refreshState: 0,
 
   ///
-  /// Init
-  ///
-  init: function() {
-    this.refreshState = 0;
-    TileServer.instance().ready( unused => {
-      this.refreshState = 1;
-    });
-  },
-
-  ///
   /// tick at 60fps
   ///
   tick: function() {
-    // Ready?
-    if(!this.refreshState) {
-      return;
-    }
     // Update level of detail based on viewing mode
     this.updateView();
     // Sweep old tiles if any
@@ -181,19 +167,12 @@ AFRAME.registerComponent('a-terrain', {
     data.lat = data.latitude;
     data.lon = data.longitude;
 
-    if(this.data.debug)console.log("looking at " + data.latitude + " " + data.longitude + " " + data.lod + " " + data.elevation);
-
     // TODO mercator is giving us some trouble here - TODO examine more later - constrain for now
     if(data.lat > 85) data.lat = 85;
     if(data.lat < -85) data.lat = -85;
 
     // ask tile server for facts about a given latitude, longitude, lod
     let scheme = TileServer.instance().scheme_elaborate(data);
-
-    // convenience values
-    scheme.width_world = 2*Math.PI*scheme.world_radius;
-    scheme.width_tile_flat = scheme.width_world / scheme.w;
-    scheme.width_tile_lat = scheme.width_tile_flat * Math.cos(data.lat * Math.PI / 180);
 
     // the number of tiles to fetch in each direction is a function of the camera fov (45') and elevation over the size of a tile at current lod
     let count = Math.floor(data.elevation / scheme.width_tile_lat) + 1;
@@ -237,7 +216,7 @@ AFRAME.registerComponent('a-terrain', {
       element.setAttribute('id',scheme.uuid);
       element.setAttribute('a-tile',data);
       this.el.appendChild(element);
-      // set lod and loaded directly on the element right now because getAttribute() appears to sometimes not be set synchronously
+      // WARN set lod and loaded directly on the element right now because getAttribute() appears to sometimes not be set synchronously
       element.lod = data.lod;
       element.loaded = 0;
       this.tiles[scheme.uuid] = element;
@@ -245,7 +224,7 @@ AFRAME.registerComponent('a-terrain', {
   },
 
   ///
-  /// Hide tiles that are not interesting if they are occluded by interesting tiles
+  /// Hide any tiles that are not at the current LOD if current LOD is fully present
   ///
   sweepTiles: function() {
 

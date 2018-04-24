@@ -52,11 +52,20 @@ Use in the browser with an html document like so:
 
 ```html
 <script src="https://aframe.io/releases/0.7.1/aframe.min.js"></script>
-<script src="https://unpkg.com/aframe-aterrain-component/dist/aframe-aterrain-component.min.js"></script>
+<script src="../js/aframe-orbit-controls-component.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/webpack-cesium/1.37.0/webpack.cesium.js"></script>
+<script src="../../dist/aframe-aterrain-component.js"></script>
 <a-scene>
-<a-entity a-terrain="radius:100; elevation:263727982"></a-entity>
-<a-entity id="camera" camera="fov:45" mouse-cursor position="0 0 500"></a-entity>
+<a-entity a-terrain="follow:0; fovpad:2; latitude:37; longitude:-122; radius:1000; elevation:580000"></a-entity>
+<a-entity id="camera" camera="fov:45" mouse-cursor position="0 0 5000"></a-entity>
 </a-scene>
+```
+
+Or to [see a single tile on demand](https://anselm.github.io/aterrain/examples/helloworld/tile.html):
+
+```html
+<a-box id="target" width="10" height="10" depth="100"></a-box>
+<a-entity id="camera" camera="fov:45" mouse-cursor position="0 0 700"></a-entity>
 ```
 
 #### npm
@@ -99,10 +108,17 @@ I'm using a few specific pieces of Cesium (with support from the Cesium team for
     - Ellipsoid concept
     - Map Projection
 
-### Todo
+### Remaining areas for improvement (April 22 2018)
 
-  - There is jitter at street level probably due to math scale... what if I generate the tiles with the translation offset already in them?
-  - There is a bug with gltf buildings placement due to custom gltf extensions in Cesium which I am not adhering to
-  - Right now the street level view mode assumes the viewer is at 0,0,0 effectively and this should be variable
-  - Could show an #MR use case
+  - Right now the street level view mode is implicitly triggered if no target is set & assumes the viewer is at 0,0,0 effectively and this should be adjustable.
+  - It's pretty easy to replace the Cesium zig-zag terrain decoder and in which case the entire engine would be more portable
+  - There's a lot of small cleanup, marked with TODO 
+  - Since ES6 is supported in browser - a compile step could be made optional
+  - I have a 'stretch' attribute which should also be applied to camera position (or else camera can go under the ground)
+  - The ground elevation coudl also be used better for helping camera from going under ground (it's not really used at all)
+  - All data urls should be pushed up to the aterrain variables rather than buried in Image or Terrain components
+  - There's a list of other bugs on the github
+  - a-buildings should not be attached to a-tiles but should also be optionally totally independent so they can show up at lower levels of detail
+  - It would be handy to elaborate on a-location nodes (which are undocumented but let you place things on the planet).
+  - I have no way of knowing if a-buildings are found or not on the server - so it throws spurious 404's - there should be a management system
 
