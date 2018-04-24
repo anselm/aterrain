@@ -37,8 +37,8 @@ AFRAME.registerComponent('a-tile', {
       if(data.project) {
 
         // translate to surface of sphere
-        let offset = TileServer.instance().ll2v(scheme.rect.south+scheme.degrees_latrad/2,
-                                      scheme.rect.west+scheme.degrees_lonrad/2,
+        let offset = TileServer.instance().ll2v(scheme.rect.south, //+scheme.degrees_latrad/2,
+                                      scheme.rect.west, //+scheme.degrees_lonrad/2,
                                       scheme.radius );
         this.el.object3D.position.set(offset.x,offset.y,offset.z);
 
