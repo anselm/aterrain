@@ -22,8 +22,10 @@ AFRAME.registerComponent('a-tile', {
           // TODO study -> there seem to be more missing tiles here - don't use this source for now?
           // url: {type: 'string', default: 'https://beta.cesium.com/api/assets/3699?access_token=' + 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYmI0ZmY0My1hOTg5LTQzNWEtYWRjNy1kYzYzNTM5ZjYyZDciLCJpZCI6NjksImFzc2V0cyI6WzM3MDQsMzcwMywzNjk5LDM2OTNdLCJpYXQiOjE1MTY4MzA4ODZ9.kM-JnlG-00e7S_9fqS_QpXYTg7y5-cIEcZEgxKwRt5E' },
          project: {type: 'number', default: 0 },
-    building_url:     {type: 'string', default: 'https://s3.amazonaws.com/cesium-dev/Mozilla/SanFranciscoGltf15Gz1'  },
-    building_flags:   {type: 'number', default: 2           }
+    building_url: {type: 'string', default: 'https://s3.amazonaws.com/cesium-dev/Mozilla/SanFranciscoGltf15Gz1'  },
+  building_flags: {type: 'number', default: 2           },
+ buildingTexture: {type: 'string', default: '' },
+   groundTexture: {type: 'string', default: '' },
   },
   init: function () {
 
@@ -33,6 +35,7 @@ AFRAME.registerComponent('a-tile', {
 
       // show tile
       this.el.setObject3D('mesh',scheme.mesh);
+      scheme.mesh.kind = "tile"; // need some way to discriminate between tiles and other things
 
       if(data.project) {
 

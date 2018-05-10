@@ -4,6 +4,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/webpack-cesium/1.37.0/webpack.cesium.js"></script>
 <script src="../../dist/aframe-aterrain-component.js"></script>
 <script src="https://fernandojsg.github.io/aframe-camera-transform-controls-component/dist/aframe-camera-transform-controls-component.min.js"></script>
+<script src="https://rawgit.com/feiss/aframe-environment-component/master/dist/aframe-environment-component.min.js"></script>
+
 
 <style>
 body { background:#87CEEB; overflow:hidden;}
@@ -20,12 +22,18 @@ body { background:#87CEEB; overflow:hidden;}
                      latitude:37.7983222;
                      longitude:-122.3972797;
                      elevation:400;
+                     buildingTexture:glacier3.png;
+		     groundTexture:richter_lines.png;
                   ">
+</a-entity>
+
+<a-entity a-terrain-style
+>
 </a-entity>
 
 <!-- actually the coast near here is 20+ meters or so under ellipsoid sea level according to the data sources -->
 
-<a-entity id="cameraRig" position="0 400 0" >
+<a-entity id="cameraRig" position="0 0 0" >
   <a-entity id="camera" camera wasd-controls look-controls orbit-controls></a-entity>
   <a-entity id="lefthand" camera-transform-controls-hand="hand:left" vive-controls="hand: left" oculus-touch-controls="hand: left" windows-motion-controls="hand: left"></a-entity>
   <a-entity id="righthand" camera-transform-controls-hand="hand:right" vive-controls="hand: right" oculus-touch-controls="hand: right" windows-motion-controls="hand: right"></a-entity>

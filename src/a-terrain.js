@@ -31,26 +31,27 @@ AFRAME.registerComponent('a-terrain', {
     //   1 = move globe such that the current latitude, longitude are at 0,0,0 (only if the observer is null)
     //   2 = move globe elevation also (only if the observer is null)
     follow:           {type: 'number', default: 3           },
-    // Current latitude, longitude and elevation in meters - currently 6000 meters above Cafe Coquetta on the Embarcadero next to the bay in San Francisco
+    // Current latitude, longitude and elevation in meters - currently 600 meters above Cafe Coquetta on the Embarcadero next to the bay in San Francisco
     // Note elevation is NOT related to the rendering radius but is a planetary space value and should stay the same regardless of rendering radius
     // Note that this exact position and elevation is where we have 3d building tiles and it's a good vantage point to showcase the data set
     // Note if the observer is set then these below values are ignored and they are dynamically manufactured by looking at observers relative position
     latitude:         {type: 'number', default: 37.7983222  },
     longitude:        {type: 'number', default: -122.3972797},
-    elevation:        {type: 'number', default: 60000       },
+    elevation:        {type: 'number', default: 600         },
     // How much to stretch planet heights by so that mountains are more visible
     // TODO not fully implemented
     stretch:          {type: 'number', default: 1           },
-    // have tiles project into the world properly
-    project:          {type: 'number', default: 1           },
     // LOD = Level of detail. This is for internal use only and is manufactured from the elevation. 15 = the first level where 3d building geometry is allowed to be seen.
     lod:              {type: 'number', default: 15          },
     // fovpad is a hack to circumvent limits with observer field of view; basically a camera could be near the planet but see the whole planet at once
     // TODO the tilings strategy should be improved to deal with some of the possible cases of observer field of view - remove this fudge factor later
     fovpad:           {type: 'number', default: 0           },
     debug:            {type: 'number', default: 0           },
+    url:              {type: 'string', default: "https://assets.agi.com/stk-terrain/v1/tilesets/world/tiles"},
     building_url:     {type: 'string', default: 'https://s3.amazonaws.com/cesium-dev/Mozilla/SanFranciscoGltf15Gz1'  },
-    building_flags:   {type: 'number', default: 2           }
+    building_flags:   {type: 'number', default: 2           },
+    buildingTexture:  {type: 'string', default: '' },
+    groundTexture:    {type: 'string', default: '' },
   },
 
   ///
@@ -79,17 +80,21 @@ AFRAME.registerComponent('a-terrain', {
   ///
   updateView: function() {
 
+try {
+
     let data = this.data;
 
     let observer = (data.observer && data.observer.length) > 0 ? this.el.sceneEl.querySelector("#"+data.observer) : 0;
 
     if(observer) {
 
-      // get world positions of both objects
+      // Throw away supplied position and elevation and compute relative to observer
+
+      // get world positions of both the globe and the observer
       let v1 = this.el.object3D.getWorldPosition();
       let v2 = observer.object3D.getWorldPosition();
 
-      // get distance between them
+      // get distance between them...
       let d = v1.distanceTo(v2);
 
       // find relative vector of unit length pointing at the observer
@@ -108,70 +113,79 @@ AFRAME.registerComponent('a-terrain', {
       this.previous_lat = lat;
       this.previous_lon = lon;
 
-      // find planetary coordinate space distance from sealevel of ellipsoid (or a sphere as is the case in this engine)
-      data.elevation = d * data.world_radius / data.radius - data.world_radius;
-
-      // go to degrees (for user convenience
+      // go to degrees (for user convenience - this is a bit messy tidy up later)
       data.latitude = lat * 180.0 / Math.PI;
       data.longitude = lon * 180.0 / Math.PI;
 
+      // find planetary coordinate space distance from sealevel of ellipsoid (or a sphere as is the case in this engine)
+      data.elevation = d * data.world_radius / data.radius - data.world_radius;
+
+      // What is a pleasant level of detail for a given distance from the planets center in planetary coordinates?
+      // TODO it is arguable that this could be specified separately from elevation rather than being inferred
+      data.lod = TileServer.instance().elevation2lod(data.world_radius,data.elevation);
     }
 
     else {
 
+      // test- specify lat lon
+
+      var hash = window.location.hash.substring(1);
+      var params = {}
+      hash.split('&').map(hk => { let temp = hk.split('='); params[temp[0]] = temp[1]; });
+      if(params.lat) { data.latitude = parseFloat(params.lat); data.longitude = parseFloat(params.lon); }
+      if(params.elev) {
+        data.elevation = parseFloat(params.elev);
+      }
+
+      // Focus on user supplied latitude longitude and elevation
+
+      // Exit now if no significant change
+      if(this.previous_elevation == data.elevation && this.previous_lat == data.latitude && this.previous_lon == data.longitude) {
+        return;
+      }
+      this.previous_elevation = data.elevation;
+      this.previous_lat = data.latitude;
+      this.previous_lon = data.longitude;
 
       if(data.follow & 1) {
-
-        // the planet is rotated so that the salient interest area is pointing north - ie on a vector of 0,1,0
-
+        // rotate planet so that the salient interest area is pointing north - ie on a vector of 0,1,0
         this.el.object3D.rotation.set(0,0,0);
-
         var q = new THREE.Quaternion();
-        q.setFromAxisAngle( new THREE.Vector3(0,1,0), THREE.Math.degToRad(-data.lon) );
+        q.setFromAxisAngle( new THREE.Vector3(0,1,0), THREE.Math.degToRad(-data.longitude) );
         this.el.object3D.quaternion.premultiply(q);
-        q.setFromAxisAngle( new THREE.Vector3(1,0,0), THREE.Math.degToRad(-(90-data.lat) ) );
+        q.setFromAxisAngle( new THREE.Vector3(1,0,0), THREE.Math.degToRad(-(90-data.latitude) ) );
         //q.setFromAxisAngle( new THREE.Vector3(1,0,0), THREE.Math.degToRad(data.lat) ); // <- if you wanted lat,lon just facing you if you were at 0,0,1
         this.el.object3D.quaternion.premultiply(q);
-
       }
 
       if(data.follow & 2) {
-        // the planet surface is moved to 0,0,0 in model coordinates
-        let height = data.radius * data.elevation / data.world_radius + data.radius;
+        // translate planet surface to 0,0,0 in model coordinates
+        let height = data.radius * data.elevation * data.stretch / data.world_radius + data.radius;
         this.el.object3D.position.set(0,-height,0);
       }
 
+      // What is a pleasant level of detail for a given distance from the planets center in planetary coordinates?
+      // TODO it is arguable that this could be specified separately from elevation rather than being inferred
+      data.lod = TileServer.instance().elevation2lod(data.world_radius,data.elevation);
+
+      TileServer.instance().getGround(data.latitude,data.longitude,data.lod,data.url, groundValue => {
+        // deal with undefined
+        if(!groundValue) groundValue = data.elevation;
+        // make sure is above ground
+        let e = data.elevation > groundValue ? data.elevation : groundValue;
+        // convert elevation above sea level to to model scale
+        let height = data.radius * e * data.stretch / data.world_radius + data.radius;
+        console.log("Dynamically moving planet to adjust for ground=" + groundValue + " height="+height + " stretch="+data.stretch + " elev="+e);
+        this.el.object3D.position.set(0,-height,0);
+      });
+
     }
 
-    // TODO don't call this if no changes - it's not super expensive to call anyway but is sloppy
-
-    /*
-    // This is a callback to force the view above the ground.
-    // TODO this cannot be used because I cannot control the users camera - it needs a rethink - there are fundamental design tensions.
-
-    let adjust_globe_elevation_relative_to_origin = function(groundValue) {
-      let distance = (world_radius+groundValue+data.elevation)*data.radius/world_radius;
-      obj.position.set(0,0,-distance);
-    };
-
-    TileServer.instance().getGround(data,groundValue => {
-      if(!groundValue || groundValue <0) groundValue = 0;
-      data.ground = groundValue;
-      data.groundLatched = true;
-      adjust_globe_elevation_relative_to_origin(groundValue);
-    });
-    */
-
-    // What is a pleasant level of detail for a given distance from the planets center in planetary coordinates?
-    // TODO fully hide this from this layer of engine
-    data.lod = TileServer.instance().elevation2lod(data.world_radius,data.elevation);
-
-    // Copy user values to internal
-    // TODO remove this by code cleanup later - naming inconsistencies
+    // Copy user values to internal - TODO remove this by code cleanup later - naming inconsistencies
     data.lat = data.latitude;
     data.lon = data.longitude;
 
-    // TODO mercator is giving us some trouble here - TODO examine more later - constrain for now
+    // TODO these limits are imposed by the current data sources - and should not be true for all data sources
     if(data.lat > 85) data.lat = 85;
     if(data.lat < -85) data.lat = -85;
 
@@ -181,7 +195,7 @@ AFRAME.registerComponent('a-terrain', {
     // the number of tiles to fetch in each direction is a function of the camera fov (45') and elevation over the size of a tile at current lod
     let count = Math.floor(data.elevation / scheme.width_tile_lat) + 1;
 
-    // TODO improve view strategy - render enough tiles to cover the degrees visible - regardless of current lod - however it depends on the camera fov being 45'
+    // render the field of view - TODO this strategy is not comprehensive - the camera can see past the visible tiles depending on FOV and if not looking down.
     let fovpad = data.fovpad;
     for(let i = -count-fovpad;i<count+1+fovpad;i++) {
       for(let j = -count-fovpad;j<count+1+fovpad;j++) {
@@ -192,8 +206,11 @@ AFRAME.registerComponent('a-terrain', {
                     stretch:data.stretch,
                      radius:data.radius,
                world_radius:data.world_radius,
+                        url:data.url,
                building_url:data.building_url,
                building_flags:data.building_flags,
+               buildingTexture:data.buildingTexture,
+               groundTexture:data.groundTexture,
                     project:1,
                       };
         // hack terrible code TODO cough forever loop
@@ -204,7 +221,9 @@ AFRAME.registerComponent('a-terrain', {
         this.updateOrCreateTile(scratch);
       }
     }
-
+} catch(e) {
+  console.error(e);
+}
   },
 
   ///
@@ -246,7 +265,6 @@ AFRAME.registerComponent('a-terrain', {
     };
 
     // sweep other tiles that are not at current lod
-
     for(let i = 0; i < keys.length; i++) {
       let element = this.tiles[keys[i]];
       if(element.lod != lod && element.getAttribute("visible") != false) {
@@ -257,3 +275,4 @@ AFRAME.registerComponent('a-terrain', {
   },
 
 });
+

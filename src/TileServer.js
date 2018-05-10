@@ -10,12 +10,22 @@ import ImageServer from './ImageServer.js';
 /// TODO ellipsoid is spherical and should be oblate
 
 class TileServer  {
+
  
-  getGround(data,callback) {
+  getGround(lat,lon,lod,url,callback) {
+    // this whole routine is heavy due to needing to initialize cesium - a better approach is to look at loaded tile data - improve later TODO
+ 
+    if(!this.terrainProvider) {
+      // TODO arguably this should be set once globally in a setter method because changing providers mid-flight is a bit weird
+      this.terrainProvider = new Cesium.CesiumTerrainProvider({ ellipsoid:new Cesium.Ellipsoid(1,1,1), requestVertexNormals:true, url:url });
+    }
+
+
     // TODO replace with custom height derivation - see findClosestElevation() - but it needs to interpolate still
     Cesium.when(this.terrainProvider.readyPromise).then( () => {
-      let poi = Cesium.Cartographic.fromDegrees(data.lon,data.lat);
-      Cesium.sampleTerrain(this.terrainProvider,data.lod,[poi]).then(function(groundResults) {
+      let poi = Cesium.Cartographic.fromDegrees(lon,lat);
+      if(lod > 15) lod = 15; // there are no tiles at some higher levels of detail
+      Cesium.sampleTerrain(this.terrainProvider,lod,[poi]).then(function(groundResults) {
         callback(groundResults[0].height);
       });
     });
@@ -334,19 +344,36 @@ class TileServer  {
       this.terrainProvider = new Cesium.CesiumTerrainProvider({ ellipsoid:new Cesium.Ellipsoid(1,1,1), requestVertexNormals:true, url:data.url });
     }
 
+    let material = 0;
+
+    if(data.groundTexture && data.groundTexture.length) {
+      let texture = new THREE.TextureLoader().load('../env/'+data.groundTexture);
+      material = new THREE.MeshBasicMaterial({map:texture,color:0xffffff});
+    }
+
     Cesium.when(this.terrainProvider.readyPromise).then( () => {
       ImageServer.instance().ready( () => {
         let scheme = this.scheme_elaborate(data);
-        this.imageProvider = ImageServer.instance(); // not the most elegant... TODO move? have a parent wrapper for both providers?
-        this.imageProvider.provideImage(scheme, material => {
-          scheme.material = material;
-          Cesium.when(this.terrainProvider.requestTileGeometry(scheme.xtile,scheme.ytile,scheme.lod),tile => {
-            scheme.tile = tile;
-            scheme.geometry = this.toGeometry(scheme); // this.toGeometryIdealized(scheme);
-            scheme.mesh = new THREE.Mesh(scheme.geometry,scheme.material);
-            callback(scheme);
+        if(!material) {
+          this.imageProvider = ImageServer.instance(); // not the most elegant... TODO move? have a parent wrapper for both providers?
+          this.imageProvider.provideImage(scheme, material2 => {
+            scheme.material = material2;
+            Cesium.when(this.terrainProvider.requestTileGeometry(scheme.xtile,scheme.ytile,scheme.lod),tile => {
+              scheme.tile = tile;
+              scheme.geometry = this.toGeometry(scheme); // this.toGeometryIdealized(scheme);
+              scheme.mesh = new THREE.Mesh(scheme.geometry,scheme.material);
+              callback(scheme);
+            });
           });
-        });
+        } else {
+            scheme.material = material;
+            Cesium.when(this.terrainProvider.requestTileGeometry(scheme.xtile,scheme.ytile,scheme.lod),tile => {
+              scheme.tile = tile;
+              scheme.geometry = this.toGeometry(scheme); // this.toGeometryIdealized(scheme);
+              scheme.mesh = new THREE.Mesh(scheme.geometry,scheme.material);
+              callback(scheme);
+            });
+        }
       });
     });
   }

@@ -15,8 +15,6 @@ import TileServer from './TileServer.js';
 /// See - https://github.com/KhronosGroup/glTF/tree/master/extensions/1.0/Vendor/CESIUM_RTC ...
 ///
 
-let GLTFLoader = new AFRAME.THREE.GLTFLoader();
-
 AFRAME.registerComponent('a-building', {
   schema: {
              lat: {type: 'number', default: 37.7983222 },
@@ -25,18 +23,25 @@ AFRAME.registerComponent('a-building', {
          stretch: {type: 'number', default: 1},
           radius: {type: 'number', default: 6372798.2},
     world_radius: {type: 'number', default: 6372798.2},
+             url: {type: 'string', default: "https://assets.agi.com/stk-terrain/v1/tilesets/world/tiles"}, // TODO remove
+         project: {type: 'number', default: 0 }, // TODO remove
     building_url: {type: 'string', default: 'https://s3.amazonaws.com/cesium-dev/Mozilla/SanFranciscoGltf15Gz1' },
     //building_url: {type: 'string', default: 'https://s3.amazonaws.com/cesium-dev/Mozilla/SanFranciscoGltf15Gz' }, // older format
   building_flags: {type: 'number', default: 2 } ,
+ buildingTexture: {type: 'string', default: '' },
+   groundTexture: {type: 'string', default: '' },
   },
   init: function () {
+    let GLTFLoader = new AFRAME.THREE.GLTFLoader();
     let data = this.data;
     let scheme = TileServer.instance().scheme_elaborate(data);
 
     let url = data.building_url+"/"+scheme.lod+"/"+scheme.xtile+"/"+scheme.ytile+".gltf";
-    console.log(url);
 
     GLTFLoader.load(url,(gltf) => {
+
+      // put lipstick on
+      this.gussy(gltf.scene);
 
       // compute scale if geometric radius differs from planet radius
       let s = data.world_radius ? data.radius/data.world_radius : 1;
@@ -60,7 +65,60 @@ AFRAME.registerComponent('a-building', {
 
       // add to mesh to entity
       this.el.setObject3D('mesh',gltf.scene);
+      gltf.scene.kind = "building"; // need some way to discriminate between kinds
     });
+  },
+
+  gussy: function(group) {
+
+    if(!this.data.buildingTexture || this.data.buildingTexture.length < 1) return;
+    let texture = new THREE.TextureLoader().load('../env/'+this.data.buildingTexture);
+    let material = new THREE.MeshBasicMaterial({map:texture,color:0xffffff});
+
+    group.traverse( (child) => {
+
+      if (!(child instanceof THREE.Mesh)) {
+        return;
+      }
+
+      child.geometry = new THREE.Geometry().fromBufferGeometry( child.geometry );
+
+      let geometry = child.geometry;
+
+      geometry.computeBoundingBox();
+
+      var max = geometry.boundingBox.max,
+          min = geometry.boundingBox.min;
+      var offset = new THREE.Vector2(0 - min.x, 0 - min.y);
+      var range = new THREE.Vector2(max.x - min.x, max.y - min.y);
+      var faces = geometry.faces;
+
+      geometry.faceVertexUvs[0] = [];
+
+      if(!faces) return;
+
+      for (var i = 0; i < faces.length ; i++) {
+
+          var v1 = geometry.vertices[faces[i].a], 
+              v2 = geometry.vertices[faces[i].b], 
+              v3 = geometry.vertices[faces[i].c];
+
+          geometry.faceVertexUvs[0].push([
+              new THREE.Vector2((v1.x + offset.x)/range.x ,(v1.y + offset.y)/range.y),
+              new THREE.Vector2((v2.x + offset.x)/range.x ,(v2.y + offset.y)/range.y),
+              new THREE.Vector2((v3.x + offset.x)/range.x ,(v3.y + offset.y)/range.y)
+          ]);
+      }
+      geometry.computeVertexNormals();
+      geometry.computeFaceNormals();
+      geometry.computeBoundingBox();
+      geometry.computeBoundingSphere();
+      geometry.uvsNeedUpdate = true;
+
+      child.material = material;
+    });
+
   }
+
 });
 

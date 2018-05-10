@@ -25,8 +25,8 @@ body { background:#87CEEB; overflow:hidden;}
 
 <!-- actually the coast near here is 20+ meters or so under ellipsoid sea level according to the data sources -->
 
-<a-entity id="cameraRig" position="0 -428 0" >
-  <a-entity id="camera" camera wasd-controls look-controls orbit-controls></a-entity>
+<a-entity id="cameraRig" position="0 0 0" >
+  <a-entity id="camera" camera="near:1;far:100000" wasd-controls look-controls orbit-controls></a-entity>
   <a-entity id="lefthand" camera-transform-controls-hand="hand:left" vive-controls="hand: left" oculus-touch-controls="hand: left" windows-motion-controls="hand: left"></a-entity>
   <a-entity id="righthand" camera-transform-controls-hand="hand:right" vive-controls="hand: right" oculus-touch-controls="hand: right" windows-motion-controls="hand: right"></a-entity>
 </a-entity>
