@@ -145,7 +145,7 @@ AFRAME.registerComponent('a-terrain', {
 
       // What is a pleasant level of detail for a given distance from the planets center in planetary coordinates?
       // TODO it is arguable that this could be specified separately from elevation rather than being inferred
-      if(!data.lod < 0 || data.lodLatch == 1) {
+      if(data.lod < 0 || data.lodLatch == 1) {
         data.lodLatch = 1;
         data.lod = TileServer.instance().elevation2lod(data.world_radius,data.elevation);
       }
@@ -195,7 +195,7 @@ AFRAME.registerComponent('a-terrain', {
 
       // What is a pleasant level of detail for a given distance from the planets center in planetary coordinates?
       // TODO it is arguable that this could be specified separately from elevation rather than being inferred
-      if(!data.lod < 0 || data.lodLatch == 1) {
+      if(data.lod < 0 || data.lodLatch == 1) {
         data.lodLatch = 1;
         data.lod = TileServer.instance().elevation2lod(data.world_radius,data.elevation);
       }

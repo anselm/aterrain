@@ -1,6 +1,6 @@
 {
   "name": "aframe-aterrain-component",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A 3d geographic map component for AFrame that uses Cesium data.",
   "unused_main": "dist/aframe-terrain-component.js",
   "unused_unpkg": "dist/aframe-aterrain-component.min.js",
