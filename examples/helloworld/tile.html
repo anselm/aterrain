@@ -12,17 +12,19 @@ body { background:#80a0f0; overflow:hidden;}
 
 <a-scene cursor="rayOrigin: mouse">
 
-<a-box id="target" width="10" height="10" depth="100"></a-box>
+<a-entity id="target" ></a-box>
 
-<!-- in this example a default tile is simply rendered - at the origin - at real world scale -->
-<a-entity a-tile></a-entity>
+<!-- just print a single tile, and knowing the elevation (which in this part of SF is about 29 meters below world ellipsoid - place it at the origin facing up by hand -->
+<a-entity a-tile="buildingTexture:../env/glacier4.png" position="-250 29 240" rotation="-90 0 0"></a-entity>
+
 
 <a-entity id="cameraRig">
 <a-entity
     id="camera"
-    camera="far:1000"
-    position="0 0 700"
-    orbit-controls="
+    position="0 10 0"
+    wasd-controls="fly:true" 
+    look-controls
+    unused_orbit-controls="
         autoRotate: false;
         target: #target;
         enableDamping: true;
@@ -40,6 +42,8 @@ body { background:#80a0f0; overflow:hidden;}
 </a-entity>
 
 <a-entity light="type: directional; color: #EED; intensity: 3" position="1 1 1"></a-entity>
+
+  <a-entity environment="preset: forest; ground:none; playArea:10;"></a-entity>
 
 </a-scene>
 

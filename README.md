@@ -38,6 +38,7 @@ Here is an example of the Grand Canyon.
 | latitude        | latitude     |   37.7983222  |
 | longitude       | longitude    | -122.3972797  |
 | elevation       | for lod      | 600           |
+| lod             | optional     |               |
 | radius          | planet size  | 6372798       |
 | world_radius    | planet size  | 6372798       |
 | observer        | who to watch | #camera       |
@@ -45,11 +46,21 @@ Here is an example of the Grand Canyon.
 | groundTexture   | texture fx   |               |
 | buildingTexture | texture fx   |               |
 
-A-Terrain is the main AFrame component that you interact with. It is a wrapper to manage a bunch of individual A-Tile, A-Building and A-Location objects. You give it a longitude, latitude and elevation and it will make sure that that piece of the planet is rendered.
+A-Terrain is the main AFrame component that you interact with in this package. You give it a longitude, latitude and elevation and it will make sure that that piece of the planet is rendered.
 
-There are two slight variations in the way it will render the planet.
+You may optionally specify a lod (level of detail or zoom level) which forces a specific resolution of tiles (to understand LOD see https://wiki.openstreetmap.org/wiki/Zoom_levels ). It will produce erratic behavior so it's best to think through what's going on here when you use it. It's worth noting as well that I've slightly modified the orbit controller that you may be used to so that it "slows down" as you get closer to the surface of the planet because otherwise you'd zoom from space to face too fast.
+
+Depending on if you set an observer or not you will get different outcomes:
+
 1) If you specify an observer (which is a DOM node id such as "#camera") then A-Terrain will paint tiles to cover the visible portion of the globe at the given elevation. For example if you used an elevation like 600 (meters above sea level) and you were over the default latitude and longitude (San Francisco) then it would paint a few tiles around downtown San Francisco at almost street level.
+
 2) If you do not specify an observer then it will move and orient the entire globe so that you're standing on the ground at that point on the globe. By this I mean it moves and rotates the surface of the globe to intersect (0,0,0). This is intended to reduce the hassle of having to deal with spherical coordinates.
+
+The 'stretch' argument stretches the planet so that you can see height related details better (such as mountains).
+
+The radius is your model radius. The world_radius is the radius of your planet.
+
+The groundTexture and buildingTexture are art-effects that you can use to thematically make buildings and ground match your application.
 
 ### A-Tile API
 

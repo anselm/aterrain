@@ -41,8 +41,9 @@ AFRAME.registerComponent('a-terrain', {
     // How much to stretch planet heights by so that mountains are more visible
     // TODO not fully implemented
     stretch:          {type: 'number', default: 1           },
-    // LOD = Level of detail. This is for internal use only and is manufactured from the elevation. 15 = the first level where 3d building geometry is allowed to be seen.
-    lod:              {type: 'number', default: 15          },
+    // LOD = Level of detail. If not specified then it will be computed from elevation.
+    lod:              {type: 'number', default: -1          },
+    input:            {type: 'number', default: 0           },
     // fovpad is a hack to circumvent limits with observer field of view; basically a camera could be near the planet but see the whole planet at once
     // TODO the tilings strategy should be improved to deal with some of the possible cases of observer field of view - remove this fudge factor later
     fovpad:           {type: 'number', default: 0           },
@@ -65,6 +66,30 @@ AFRAME.registerComponent('a-terrain', {
   // Latch for startup - TODO probably a more elegant way to latch tick() after init callback is done
   refreshState: 0,
 
+/*
+  inputControls: function() {
+    if(!this.data.input)
+      return;
+
+    // this is an optional control to move the planet under the observer - constantly generating new tiles
+
+    document.addEventListener('keydown', (event) => {
+      switch(event.keyCode) {
+        case 81: this.data.elevation = this.data.elevation * 1.5; break;
+        case 69: this.data.elevation = this.data.elevation / 1.5; break;
+        case 38: case 87: this.data.latitude += this.data.elevation / 10000; break;
+        case 40: case 83: this.data.latitude -= this.data.elevation / 10000; break;
+        case 39: case 68: this.data.longitude += this.data.elevation / 10000; break;
+        case 37: case 65: this.data.longitude -= this.data.elevation / 10000; break;
+      }
+    });
+  },
+
+  init: function() {
+    this.inputControls();
+  },
+*/
+
   ///
   /// tick at 60fps
   ///
@@ -79,8 +104,6 @@ AFRAME.registerComponent('a-terrain', {
   /// Update view based on view mode
   ///
   updateView: function() {
-
-try {
 
     let data = this.data;
 
@@ -122,12 +145,15 @@ try {
 
       // What is a pleasant level of detail for a given distance from the planets center in planetary coordinates?
       // TODO it is arguable that this could be specified separately from elevation rather than being inferred
-      data.lod = TileServer.instance().elevation2lod(data.world_radius,data.elevation);
+      if(!data.lod < 0 || data.lodLatch == 1) {
+        data.lodLatch = 1;
+        data.lod = TileServer.instance().elevation2lod(data.world_radius,data.elevation);
+      }
     }
 
     else {
 
-      // test- specify lat lon
+      // this is a slight hack to allow a caller to specify lat lon - it's not formally documented as a feature
 
       var hash = window.location.hash.substring(1);
       var params = {}
@@ -135,6 +161,9 @@ try {
       if(params.lat) { data.latitude = parseFloat(params.lat); data.longitude = parseFloat(params.lon); }
       if(params.elev) {
         data.elevation = parseFloat(params.elev);
+      }
+      if(params.lod) {
+        data.lod = parseInt(params.lod);
       }
 
       // Focus on user supplied latitude longitude and elevation
@@ -166,13 +195,16 @@ try {
 
       // What is a pleasant level of detail for a given distance from the planets center in planetary coordinates?
       // TODO it is arguable that this could be specified separately from elevation rather than being inferred
-      data.lod = TileServer.instance().elevation2lod(data.world_radius,data.elevation);
+      if(!data.lod < 0 || data.lodLatch == 1) {
+        data.lodLatch = 1;
+        data.lod = TileServer.instance().elevation2lod(data.world_radius,data.elevation);
+      }
 
       TileServer.instance().getGround(data.latitude,data.longitude,data.lod,data.url, groundValue => {
         // deal with undefined
-        if(!groundValue) groundValue = data.elevation;
+        if(!groundValue) groundValue = 0;
         // make sure is above ground
-        let e = data.elevation > groundValue ? data.elevation : groundValue;
+        let e = groundValue + data.elevation;
         // convert elevation above sea level to to model scale
         let height = data.radius * e * data.stretch / data.world_radius + data.radius;
         console.log("Dynamically moving planet to adjust for ground=" + groundValue + " height="+height + " stretch="+data.stretch + " elev="+e);
@@ -221,9 +253,7 @@ try {
         this.updateOrCreateTile(scratch);
       }
     }
-} catch(e) {
-  console.error(e);
-}
+
   },
 
   ///

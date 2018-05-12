@@ -347,7 +347,7 @@ class TileServer  {
     let material = 0;
 
     if(data.groundTexture && data.groundTexture.length) {
-      let texture = new THREE.TextureLoader().load('../env/'+data.groundTexture);
+      let texture = new THREE.TextureLoader().load(data.groundTexture);
       material = new THREE.MeshBasicMaterial({map:texture,color:0xffffff});
     }
 
