@@ -337,6 +337,25 @@ class TileServer  {
     return geometry;
   }
 
+  isReady() {
+    if(!this.terrainProvider || !this.terrainProvider.ready || !ImageServer.instance() || !ImageServer.instance().isReady()) {
+      return false;
+    }
+    return true;
+  }
+
+  ready(url,callback) {
+    if(!this.terrainProvider) {
+      // TODO arguably this should be set once globally in a setter method because changing providers mid-flight is a bit weird
+      this.terrainProvider = new Cesium.CesiumTerrainProvider({ ellipsoid:new Cesium.Ellipsoid(1,1,1), requestVertexNormals:true, url:url });
+    }
+    Cesium.when(this.terrainProvider.readyPromise).then( () => {
+      ImageServer.instance().ready( () => {
+        callback();
+      });
+    });
+  }
+
   produceTile(data,callback) {
 
     if(!this.terrainProvider) {

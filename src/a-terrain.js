@@ -90,10 +90,19 @@ AFRAME.registerComponent('a-terrain', {
   },
 */
 
+  init: function() {
+    TileServer.instance().ready(this.data.url,function() {
+      console.log("Lower level TileServer is ready");
+    });
+  },
+
   ///
   /// tick at 60fps
   ///
   tick: function() {
+    if(!TileServer.instance().isReady()) {
+      return;
+    }
     // Update level of detail based on viewing mode
     this.updateView();
     // Sweep old tiles if any

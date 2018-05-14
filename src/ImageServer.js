@@ -20,14 +20,19 @@ class BingImageProvider {
     }
     let metadata = "https://dev.virtualearth.net/REST/V1/Imagery/Metadata/Aerial?output=json&include=ImageryProviders&key=RsYNpiMKfN7KuwZrt8ur~ylV3-qaXdDWiVc2F5NCoFA~AkXwps2-UcRkk2L60K5qBy5kPnTmwvxdfwl532NTheLdFfvYlVJbLnNWG1iC-RGL";
     fetch(metadata).then(response => { return response.json() }).then( json => {
-      let subdomains = json.resourceSets[0].resources[0].imageUrlSubdomains;
-      scope.subdomain = subdomains[~~(subdomains.length * Math.random())];
-      scope.imageurl = json.resourceSets[0].resources[0].imageUrl;
-      scope.imageurl = scope.imageurl.replace("http", "https");
-      scope.imageurl = scope.imageurl.replace("{culture}", "en-US");
-      scope.imageurl = scope.imageurl.replace("{subdomain}",scope.subdomain);
-      scope.imageurl = scope.imageurl.replace("jpeg", "png");
-      resolve();
+      if(!json.resourceSets.length || !json.resourceSets[0].resources.length) {
+        console.error("Too many requests");
+        setTimeout(function() { resolve(); },Math.random() * 10 + 1);
+      } else {
+        let subdomains = json.resourceSets[0].resources[0].imageUrlSubdomains;
+        scope.subdomain = subdomains[~~(subdomains.length * Math.random())];
+        scope.imageurl = json.resourceSets[0].resources[0].imageUrl;
+        scope.imageurl = scope.imageurl.replace("http", "https");
+        scope.imageurl = scope.imageurl.replace("{culture}", "en-US");
+        scope.imageurl = scope.imageurl.replace("{subdomain}",scope.subdomain);
+        scope.imageurl = scope.imageurl.replace("jpeg", "png");
+        resolve();
+      }
     });
   }
 
@@ -103,6 +108,15 @@ class ImageServer {
       this.data.url = 'https://dev.virtualearth.net',
       this.imageProvider = new Cesium.BingMapsImageryProvider(this.data);
     }
+  }
+
+  isReady() {
+    // TODO examine why do the readypromises differ?
+    if(this.data.source == 0) {
+      return this.imageProvider && this.imageProvider.imageurl;
+    } else {
+      return this.imageProvider && this.imageProvider.ready;
+    }    
   }
 
   ready(callback) {
