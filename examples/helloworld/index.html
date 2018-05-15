@@ -10,7 +10,7 @@
 body { background:#101010; overflow:hidden;}
 </style>
 
-<a-scene cursor="rayOrigin: mouse">
+<a-scene camera-transform-controls cursor="rayOrigin: mouse">
 
 <a-assets>
 <img id="sky" src="../assets/PIA12348_hires.jpg">
@@ -24,6 +24,7 @@ body { background:#101010; overflow:hidden;}
 <a-entity
     id="camera"
     camera="fov: 45; near:0.01; far:10000"
+    wasd-controls="fly:true" look-controls
     position="0 1 5000"
     orbit-controls="
         autoRotate: false;
