@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+    <script src="https://aframe.io/releases/0.7.1/aframe.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/webpack-cesium/1.37.0/webpack.cesium.js"></script>
+    <script src="../../dist/aframe-aterrain-component.js"></script>
+
+</head>
+<body>
+
+
+<!--
+
+This demo should put the user in SF with a large 10 meter duck 4 meters to the right
+
+questions:
+* why does a-location need a radius? (or does it?)
+* is LOD required? it doesn't render at all with out it
+* why can't I see the duck?
+* why does a-location say elevation is an unknown property?
+* why does a-location use lat/lon instead of latitude/longitude like a-terrain does?
+
+--->
+
+<a-scene>
+    <a-entity a-terrain="fovpad:1;
+                     latitude:37.7983222;
+                     longitude:-122.3972797;
+                     elevation:1;
+                     lod:15;
+                  ">
+        <a-entity a-location="lat:37.79832222; lon:-122.3972797; elevation:10; radius: 1010;">
+            <a-gltf-model scale="10 10 10" position="4 0 0" src="../assets/duck.gltf"></a-gltf-model>
+        </a-entity>
+    </a-entity>
+</a-scene>
+
+</body>
+</html>
