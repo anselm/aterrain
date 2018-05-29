@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="https://aframe.io/releases/0.7.1/aframe.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/webpack-cesium/1.37.0/webpack.cesium.js"></script>
+    <script src="../../dist/aframe-aterrain-component.js"></script>
+</head>
+<body>
+
+<!--
+This demo shows the grand canyon as a single tile, w/ the camera floating above it.
+
+questions:
+
+* do we need world radius? the default should work, right?
+* do we need stretch? why does it look so flat with 'natural' data? Is that an FOV issue?
+* why do I need to specify lod 14? should that be based on the elevation?
+* is 100k a good radius?
+
+-->
+<a-scene>
+
+    <a-entity position="0 0 0" a-terrain="
+                     latitude:36.1069652;
+                     longitude:-112.1129972;
+                     stretch:4;
+                     lod:14;
+                     elevation:500;
+                     radius:100000;
+                     world_radius:63727982;
+                  ">
+    </a-entity>
+</a-scene>
+
+
+</body>
+</html>

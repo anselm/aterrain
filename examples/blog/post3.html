@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="https://aframe.io/releases/0.7.1/aframe.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/webpack-cesium/1.37.0/webpack.cesium.js"></script>
+    <script src="../../dist/aframe-aterrain-component.js"></script>
+</head>
+<body>
+
+<!--
+
+This should show a static globe with a duck spinning on it at greenwich england.
+
+questions:
+
+* why does the a-location need a radius?
+* why do we have the -90 x rotation? nevermind. without it the duck would be on it's side
+
+-->
+
+<a-scene>
+    <a-entity a-terrain="radius:1000; observer:camera">
+        <a-entity a-location="lat:51.48; lon:0; radius:1010;">
+            <a-entity rotation="-90 0 0">
+                <a-gltf-model scale="100 100 100" src="../assets/duck.gltf">
+                    <a-animation attribute="rotation" dur="1000" from="0 0 0" to="0 360 0" easing="linear" repeat="indefinite">
+                    </a-animation>
+                </a-gltf-model>
+            </a-entity>
+        </a-entity>
+    </a-entity>
+
+    <a-entity
+            id="camera"
+            camera="far:10000"
+            position="0 1 2000"
+    >
+    </a-entity>
+</a-scene>
+
+</body>
+</html>
