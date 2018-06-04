@@ -25,7 +25,8 @@ AFRAME.registerComponent('a-building', {
     world_radius: {type: 'number', default: 6372798.2},
              url: {type: 'string', default: "https://assets.agi.com/stk-terrain/v1/tilesets/world/tiles"}, // TODO remove
          project: {type: 'number', default: 0 }, // TODO remove
-    building_url: {type: 'string', default: 'https://s3.amazonaws.com/cesium-dev/Mozilla/SanFranciscoGltf15Gz1' },
+    building_url: {type: 'string', default: 'mozilla.cesium.com' },
+//    building_url: {type: 'string', default: 'https://s3.amazonaws.com/cesium-dev/Mozilla/SanFranciscoGltf15Gz1' },
     //building_url: {type: 'string', default: 'https://s3.amazonaws.com/cesium-dev/Mozilla/SanFranciscoGltf15Gz' }, // older format
   building_flags: {type: 'number', default: 2 } ,
  buildingTexture: {type: 'string', default: '' },

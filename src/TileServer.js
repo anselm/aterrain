@@ -15,11 +15,7 @@ class TileServer  {
   getGround(lat,lon,lod,url,callback) {
     // this whole routine is heavy due to needing to initialize cesium - a better approach is to look at loaded tile data - improve later TODO
  
-    if(!this.terrainProvider) {
-      // TODO arguably this should be set once globally in a setter method because changing providers mid-flight is a bit weird
-      this.terrainProvider = new Cesium.CesiumTerrainProvider({ ellipsoid:new Cesium.Ellipsoid(1,1,1), requestVertexNormals:true, url:url });
-    }
-
+    this.setProvider(url);
 
     // TODO replace with custom height derivation - see findClosestElevation() - but it needs to interpolate still
     Cesium.when(this.terrainProvider.readyPromise).then( () => {
@@ -344,11 +340,14 @@ class TileServer  {
     return true;
   }
 
+  setProvider(url) {
+    if(this.terrainProvider) return;
+    // this.terrainProvider = new Cesium.CesiumTerrainProvider({ ellipsoid:new Cesium.Ellipsoid(1,1,1), requestVertexNormals:true, url:url });
+    this.terrainProvider = Cesium.createWorldTerrain();
+  }
+
   ready(url,callback) {
-    if(!this.terrainProvider) {
-      // TODO arguably this should be set once globally in a setter method because changing providers mid-flight is a bit weird
-      this.terrainProvider = new Cesium.CesiumTerrainProvider({ ellipsoid:new Cesium.Ellipsoid(1,1,1), requestVertexNormals:true, url:url });
-    }
+    this.setProvider(url);
     Cesium.when(this.terrainProvider.readyPromise).then( () => {
       ImageServer.instance().ready( () => {
         callback();
@@ -358,10 +357,7 @@ class TileServer  {
 
   produceTile(data,callback) {
 
-    if(!this.terrainProvider) {
-      // TODO arguably this should be set once globally in a setter method because changing providers mid-flight is a bit weird
-      this.terrainProvider = new Cesium.CesiumTerrainProvider({ ellipsoid:new Cesium.Ellipsoid(1,1,1), requestVertexNormals:true, url:data.url });
-    }
+    this.setProvider(data.url);
 
     let material = 0;
 

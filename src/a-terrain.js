@@ -91,6 +91,10 @@ AFRAME.registerComponent('a-terrain', {
 */
 
   init: function() {
+
+    // refine soon - TODO
+    Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI4YzI5OGVlNy1jOWY2LTRjNmEtYWYzMC1iNzhkZDhkZmEwOWEiLCJpZCI6MTM2MCwiaWF0IjoxNTI4MTQ0MDMyfQ.itVtUPeeXb7dasKXTUYZ6r3Hbm7OVUoA26ahLaVyj5I';
+
     TileServer.instance().ready(this.data.url,function() {
       console.log("Lower level TileServer is ready");
     });
