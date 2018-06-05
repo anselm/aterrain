@@ -32,8 +32,10 @@ questions:
                      elevation:1;
                      lod:15;
                   ">
-        <a-entity a-location="lat:37.79832222; lon:-122.3972797; elevation:10; radius: 1010;">
-            <a-gltf-model scale="10 10 10" position="4 0 0" src="../assets/duck.gltf"></a-gltf-model>
+        <a-entity a-location="lat:37.79832222; lon:-122.3972797; mode:relative; elevation:0;">
+            <a-entity position="-20 0 0" rotation="-90 0 0">
+                    <a-gltf-model scale="10 10 10" src="https://raw.githubusercontent.com/anselm/aterrain/master/examples/assets/duck.gltf"></a-gltf-model>
+            </a-entity>
         </a-entity>
     </a-entity>
 </a-scene>
