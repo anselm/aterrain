@@ -59,13 +59,6 @@ AFRAME.registerComponent('a-tile', {
 
       // mark as complete
       this.el.loaded = 1;
-      // look for buildings
-      if(scheme.lod >= 15) {
-        // try fetch a building - unfortunately this throws an error and there's no way to not log it if the building is not found
-        let building = document.createElement('a-entity');
-        building.setAttribute('a-building',data);
-        this.el.appendChild(building);
-      }
 
     });
   }

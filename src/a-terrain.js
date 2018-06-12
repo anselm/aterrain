@@ -264,8 +264,23 @@ AFRAME.registerComponent('a-terrain', {
         while(scratch.lat < -90) scratch.lat += 180;
         while(scratch.lat >= 90) scratch.lat -= 180;
         this.updateOrCreateTile(scratch);
+
+// this is a first pass
+// i should see buildings at lod 15 now
+// and i still would need to make sure i don't fetch them twice
+
+        // look for buildings
+        if(scheme.lod >= 15) {
+          // try fetch a building - unfortunately this throws an error and there's no way to not log it if the building is not found
+          let building = document.createElement('a-entity');
+          building.setAttribute('a-building',scratch);
+          this.el.appendChild(building);
+        }
+
+
       }
     }
+
 
   },
 
