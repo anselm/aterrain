@@ -22,7 +22,8 @@ AFRAME.registerComponent('a-tile', {
          project: {type: 'number', default: 0 },
    groundTexture: {type: 'string', default: '' },
 
-    building_url: {type: 'string', default: 'https://s3.amazonaws.com/cesium-dev/Mozilla/SanFranciscoGltf15Gz3' },
+    building_url: {type: 'string', default: 'https://mozilla.cesium.com/SanFranciscoGltf15' },
+//    building_url: {type: 'string', default: 'https://s3.amazonaws.com/cesium-dev/Mozilla/SanFranciscoGltf15Gz3' },
   building_flags: {type: 'number', default: 2 } ,
  buildingTexture: {type: 'string', default: '' },
 
