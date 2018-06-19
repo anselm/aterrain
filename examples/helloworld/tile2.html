@@ -1,0 +1,51 @@
+
+<!-- scripts -->
+<script src="https://aframe.io/releases/0.7.1/aframe.min.js"></script>
+<script src="../js/aframe-orbit-controls-component.js"></script>
+<script src="../../Build/CesiumUnminified/Cesium.js"></script>
+<script src="../../dist/aframe-aterrain-component.js"></script>
+<script src="https://unpkg.com/aframe-environment-component@1.0.0/dist/aframe-environment-component.min.js"></script>
+
+<style>
+body { background:#80a0f0; overflow:hidden;}
+</style>
+
+<a-scene cursor="rayOrigin: mouse">
+
+<a-entity id="target" ></a-box>
+
+<!-- just print a single tile, and knowing the elevation (which in this part of SF is about 29 meters below world ellipsoid - place it at the origin facing up by hand -->
+<a-entity a-tile="buildingTexture:../env/glacier4.png; lod:14;" position="0 -1000 0" rotation="-90 0 0"></a-entity>
+
+<a-box color="tomato" width="1" depth="1" height="1" width="0.5"></a-box>
+
+<a-entity id="cameraRig">
+<a-entity
+    id="camera"
+    position="0 10 0"
+camera="near:1;far:100000"
+    wasd-controls="fly:true" 
+    look-controls
+    unused_orbit-controls="
+        autoRotate: false;
+        target: #target;
+        enableDamping: true;
+        dampingFactor: 0.125;
+        rotateSpeed:0.10;
+        minDistance:0;
+        maxDistance:1000;
+        minPolarAngle:0.1;
+        maxPolarAngle:3.04159265359;
+        enableProportionalVelocity:true;
+    ">
+</a-entity>
+<a-entity id="lefthand" camera-transform-controls-hand="hand:left" vive-controls="hand: left" oculus-touch-controls="hand: left" windows-motion-controls="hand: left"></a-entity>
+<a-entity id="righthand" camera-transform-controls-hand="hand:right" vive-controls="hand: right" oculus-touch-controls="hand: right" windows-motion-controls="hand: right"></a-entity>
+</a-entity>
+
+<a-entity light="type: directional; color: #EED; intensity: 3" position="1 1 1"></a-entity>
+
+
+</a-scene>
+
+

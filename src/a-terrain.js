@@ -49,7 +49,8 @@ AFRAME.registerComponent('a-terrain', {
     fovpad:           {type: 'number', default: 0           },
     debug:            {type: 'number', default: 0           },
     url:              {type: 'string', default: "https://assets.agi.com/stk-terrain/v1/tilesets/world/tiles"},
-    building_url:     {type: 'string', default: 'https://s3.amazonaws.com/cesium-dev/Mozilla/SanFranciscoGltf15Gz1'  },
+//    building_url:     {type: 'string', default: 'https://mozilla.cesium.com/SanFranciscoGltf15'  },
+    building_url: {type: 'string', default: 'https://s3.amazonaws.com/cesium-dev/Mozilla/SanFranciscoGltf15Gz3' },
     building_flags:   {type: 'number', default: 2           },
     buildingTexture:  {type: 'string', default: '' },
     groundTexture:    {type: 'string', default: '' },
@@ -265,18 +266,19 @@ AFRAME.registerComponent('a-terrain', {
         while(scratch.lat >= 90) scratch.lat -= 180;
         this.updateOrCreateTile(scratch);
 
+/*
 // this is a first pass
 // i should see buildings at lod 15 now
 // and i still would need to make sure i don't fetch them twice
 
         // look for buildings
-        if(scheme.lod >= 15) {
+        if(scheme.lod >= 14) {
           // try fetch a building - unfortunately this throws an error and there's no way to not log it if the building is not found
           let building = document.createElement('a-entity');
           building.setAttribute('a-building',scratch);
           this.el.appendChild(building);
         }
-
+*/
 
       }
     }

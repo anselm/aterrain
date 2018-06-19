@@ -19,13 +19,13 @@ AFRAME.registerComponent('a-tile', {
           radius: {type: 'number', default: 6372798.2},
     world_radius: {type: 'number', default: 6372798.2},
              url: {type: 'string', default: "https://assets.agi.com/stk-terrain/v1/tilesets/world/tiles"},
-          // TODO study -> there seem to be more missing tiles here - don't use this source for now?
-          // url: {type: 'string', default: 'https://beta.cesium.com/api/assets/3699?access_token=' + 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYmI0ZmY0My1hOTg5LTQzNWEtYWRjNy1kYzYzNTM5ZjYyZDciLCJpZCI6NjksImFzc2V0cyI6WzM3MDQsMzcwMywzNjk5LDM2OTNdLCJpYXQiOjE1MTY4MzA4ODZ9.kM-JnlG-00e7S_9fqS_QpXYTg7y5-cIEcZEgxKwRt5E' },
          project: {type: 'number', default: 0 },
-    building_url: {type: 'string', default: 'https://s3.amazonaws.com/cesium-dev/Mozilla/SanFranciscoGltf15Gz1'  },
-  building_flags: {type: 'number', default: 2           },
- buildingTexture: {type: 'string', default: '' },
    groundTexture: {type: 'string', default: '' },
+
+    building_url: {type: 'string', default: 'https://s3.amazonaws.com/cesium-dev/Mozilla/SanFranciscoGltf15Gz3' },
+  building_flags: {type: 'number', default: 2 } ,
+ buildingTexture: {type: 'string', default: '' },
+
   },
   init: function () {
 
@@ -56,6 +56,16 @@ AFRAME.registerComponent('a-tile', {
 
 
       }
+
+
+        // look for buildings
+        if(scheme.lod >= 14) {
+          // try fetch a building - unfortunately this throws an error and there's no way to not log it if the building is not found
+          let building = document.createElement('a-entity');
+          building.setAttribute('a-building',data);
+          this.el.appendChild(building);
+        }
+
 
       // mark as complete
       this.el.loaded = 1;
