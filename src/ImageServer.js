@@ -76,7 +76,7 @@ class ImageServer {
                  credit : new Cesium.Credit('GeoportailFrance')
             });
             break;
-        /*
+        /*  works with WMTS provider, so do not need the URL provider. Retained as a note.
         case "GeoportailFrance.orthos": // works but may be LOD issues
             console.log('using GeoportailFrance.orthos');
             this.data.url = 'https://data.geopf.fr/wmts?REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0&STYLE=normal&TILEMATRIXSET=PM&FORMAT=image/jpeg&LAYER=ORTHOIMAGERY.ORTHOPHOTOS&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}';
@@ -113,21 +113,11 @@ class ImageServer {
   }
 
   isReady() {
-    // TODO examine why do the readypromises differ?
-    if(this.data.source == 0) {
-      return this.imageProvider && this.imageProvider.imageurl;
-    } else {
-      return this.imageProvider && this.imageProvider.ready;
-    }    
+    return this.imageProvider && this.imageProvider.ready;  
   }
 
   ready(callback) {
-    // TODO examine why do the readypromises differ?
-    if(this.data.source == 0) {
-      this.imageProvider.readyPromise(callback);
-    } else {
-      Cesium.when(this.imageProvider.readyPromise).then(callback);
-    }
+    Cesium.when(this.imageProvider.readyPromise).then(callback);
   }
 
   // this method calculates the image tile and fractional component (ie which pixel) of the image tile to fetch
@@ -148,7 +138,7 @@ class ImageServer {
     // Here the reprojection is done on CPU...
 
     // circument a quirk with cesium data source
-    let uselod = (this.data.source == 2) ? scheme.lod+1 : scheme.lod+1;
+    let uselod = scheme.lod+1;
 
     // get image tiles at one level deeper than terrain tiles to take advantage of x lining up
     let image_lod = Math.pow(2,uselod);
