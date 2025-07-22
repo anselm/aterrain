@@ -1,131 +1,123 @@
-
-///
-/// BingImageProvider - fetch tiles directly from Bing on demand as threejs materials
-///
-/// TODO - caches images but never flushes them - should flush old images
-/// TODO - the key is hardcoded - should be supplied by caller
-///
-
-class BingImageProvider {
-
-  constructor() {
-    this.cached = {};
-  }
-
-  readyPromise(resolve) {
-    let scope = this;
-    if(scope.imageurl) {
-      resolve();
-      return;
-    }
-    let metadata = "https://dev.virtualearth.net/REST/V1/Imagery/Metadata/Aerial?output=json&include=ImageryProviders&key=RsYNpiMKfN7KuwZrt8ur~ylV3-qaXdDWiVc2F5NCoFA~AkXwps2-UcRkk2L60K5qBy5kPnTmwvxdfwl532NTheLdFfvYlVJbLnNWG1iC-RGL";
-    fetch(metadata).then(response => { return response.json() }).then( json => {
-      if(!json.resourceSets.length || !json.resourceSets[0].resources.length) {
-        console.error("Too many requests");
-        setTimeout(function() { resolve(); },Math.random() * 10 + 1);
-      } else {
-        let subdomains = json.resourceSets[0].resources[0].imageUrlSubdomains;
-        scope.subdomain = subdomains[~~(subdomains.length * Math.random())];
-        scope.imageurl = json.resourceSets[0].resources[0].imageUrl;
-        scope.imageurl = scope.imageurl.replace("http", "https");
-        scope.imageurl = scope.imageurl.replace("{culture}", "en-US");
-        scope.imageurl = scope.imageurl.replace("{subdomain}",scope.subdomain);
-        scope.imageurl = scope.imageurl.replace("jpeg", "png");
-        resolve();
-      }
-    });
-  }
-
-  quadkey(x, y, z) {
-    let quadKey = [];
-    for (var i = z; i > 0; i--) {
-      var digit = '0';
-      var mask = 1 << (i - 1);
-      if ((x & mask) != 0) {
-          digit++;
-      }
-      if ((y & mask) != 0) {
-          digit++;
-          digit++;
-      }
-      quadKey.push(digit);
-    }
-    return quadKey.join('');
-  }
-
-  requestImage(x,y,lod) {
-    let scope = this;
-
-    let key = x + "-" + y + "-" + lod;
-    let c = scope.cached[key];
-    if(c) {
-      return new Promise(function(resolve,reject) {
-        resolve(c);
-      });
-    }
-
-    return new Promise(function(resolve,reject) {
-      let quadkey = scope.quadkey(x,y,lod);
-      let url = scope.imageurl.replace("{quadkey}", quadkey);
-      let image = new Image();
-      image.onload = unused => {
-        scope.cached[key] = image;
-        resolve(image);
-      }
-      fetch(url).then(response => { return response.blob(); }).then( blob => {
-        image.url = url;
-        image.src = URL.createObjectURL(blob);
-      });
-    });
-  }
-}
-
 ///
 /// ImageServer returns images on demand that match the terrain tile boundaries.
 ///
 /// TODO Cesium access token should be settable
-/// TODO Code is over-specialized around Bing Images + Cesium Elevation Tiles - but hard to generalize trivially.
+/// TODO Code is over-specialized around Cesium Elevation Tiles - but hard to generalize trivially.
 ///
 
 class ImageServer {
 
-  constructor() {
+  // constructor takes parameters which could be used to select the source.
+  // imageSource defaults to ESRI World Imagery. imageURL and apikey optional. apiKey not implemented yet.
+  // A imageSource of "custom" can be used along with imageryUrlTemplate as a url template for any arbitrary source.
+  //
+  // See Leaflet Providers project for api info on map image providers. https://github.com/leaflet-extras/leaflet-providers/blob/master/leaflet-providers.js
+  // imageSource names for cases are using the same names as Leaflet Providers. This could provide some standardization in naming.
+  //
+  // TODO add cases for generic URL Template, or WMTS providers.
+  // TODO update A-Terrain to allow setting properties to use imagery providers besides default.
+
+  constructor(imageSource = "ESRI.WorldImagery", imageryUrlTemplate, apiKey) {
     this.data = {};
     this.data.debug = false;
+    console.log('image server constructor using '+imageSource);
     //this.data.mapStyle = Cesium.BingMapsStyle.AERIAL;
-    this.data.source = 0;
-    if(this.data.source == 0) {
-      // bypass cesium
-      this.imageProvider = new BingImageProvider();
-    } else if(this.data.source == 1) {
-       // cesium for sf area - Something seems to be not working with this provider although it's the one I'd prefer to use right now - mar 1 2018
-       this.data.CesiumionAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYmI0ZmY0My1hOTg5LTQzNWEtYWRjNy1kYzYzNTM5ZjYyZDciLCJpZCI6NjksImFzc2V0cyI6WzM3MDQsMzcwMywzNjk5LDM2OTNdLCJpYXQiOjE1MTY4MzA4ODZ9.kM-JnlG-00e7S_9fqS_QpXYTg7y5-cIEcZEgxKwRt5E';
-       this.data.url = 'https://beta.cesium.com/api/assets/3693?access_token=' + this.data.CesiumionAccessToken;
-       this.imageProvider = new Cesium.createTileMapServiceImageryProvider(this.data);
-    } else if(this.data.source == 2) {
-      // Cesium Bing abstraction in general - works ok although LOD is off by one?
-      this.data.key = 'RsYNpiMKfN7KuwZrt8ur~ylV3-qaXdDWiVc2F5NCoFA~AkXwps2-UcRkk2L60K5qBy5kPnTmwvxdfwl532NTheLdFfvYlVJbLnNWG1iC-RGL';
-      this.data.url = 'https://dev.virtualearth.net',
-      this.imageProvider = new Cesium.BingMapsImageryProvider(this.data);
-    }
+
+    // Cesium JS (2017) contains the following imagery providers:
+    // -- ArcGisMapServerImageryProvider
+    // -- createOpenStreetMapImageryProvider
+    // -- createTileMapServiceImageryProvider
+    // -- GoogleEarthEnterpriseImageryProvider
+    // -- GoogleEarthEnterpriseMapsProvider
+    // -- GridImageryProvider
+    // -- MapboxImageryProvider
+    // -- SingleTileImageryProvider
+    // -- TileCoordinatesImageryProvider
+    // -- UrlTemplateImageryProvider
+    // -- WebMapServiceImageryProvider
+    // -- WebMapTileServiceImageryProvider
+
+    // Cesium JS 1.131 (2022) contains the following imagery providers:
+    // -- ArcGisMapServerImageryProvider
+    // -- BingMapsImageryProvider
+    // -- GoogleEarthEnterpriseImageryProvider
+    // -- GridImageryProvider
+    // -- IonImageryProvider
+    // -- MapboxImageryProvider
+    // -- MapboxStyleImageryProvider 
+    // -- OpenStreetMapImageryProvider
+    // -- SingleTileImageryProvider
+    // -- TileCoordinatesImageryProvider
+    // -- TileMapServiceImageryProvider
+    // -- UrlTemplateImageryProvider
+    // -- WebMapServiceImageryProvider
+    // -- WebMapTileServiceImageryProvider
+
+    switch (imageSource) {
+        case "USGS.USImagery": //works in USA
+            console.log('using USGS Imagery Only');
+            this.data.url = 'https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}';
+            this.imageProvider = new Cesium.UrlTemplateImageryProvider(this.data);
+            break;
+        case "USGS.USImageryTopo": //works in USA
+            console.log('using USGS Imagery Topo');
+            this.data.url = 'https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryTopo/MapServer/tile/{z}/{y}/{x}';
+            this.imageProvider = new Cesium.UrlTemplateImageryProvider(this.data);
+            break;
+        case "GeoportailFrance.orthos": //works but may be LOD issues
+            console.log('using GeoportailFrance.orthos WMTS');
+            this.imageProvider = new Cesium.WebMapTileServiceImageryProvider({
+                 url : 'https://data.geopf.fr/wmts',
+                 layer : 'ORTHOIMAGERY.ORTHOPHOTOS',
+                 style : 'normal',
+                 format : 'image/jpeg',
+                 tileMatrixSetID : 'PM',
+                 maximumLevel: 19,
+                 credit : new Cesium.Credit('GeoportailFrance')
+            });
+            break;
+        /*  works with WMTS provider, so do not need the URL provider. Retained as a note.
+        case "GeoportailFrance.orthos": // works but may be LOD issues
+            console.log('using GeoportailFrance.orthos');
+            this.data.url = 'https://data.geopf.fr/wmts?REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0&STYLE=normal&TILEMATRIXSET=PM&FORMAT=image/jpeg&LAYER=ORTHOIMAGERY.ORTHOPHOTOS&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}';
+            this.data.maxZoom = 18;
+            this.imageProvider = new Cesium.UrlTemplateImageryProvider(this.data);
+            break;
+            */
+        case "ESRI.WorldImagery": //works
+            console.log('using ESRI World Imagery');
+            this.data.url = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+            this.imageProvider = new Cesium.UrlTemplateImageryProvider(this.data);
+            break;
+        case "OpenTopoMap":
+            console.log('using OpenTopo');
+            this.data.url = 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png';
+            this.imageProvider = new Cesium.UrlTemplateImageryProvider(this.data);
+            break;
+        case "OpenStreetMap.Mapnik":
+            console.log('using Open Street Maps Mapnik');
+            this.data.url = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+            this.imageProvider = new Cesium.UrlTemplateImageryProvider(this.data);
+            break;
+        case "custom":
+            console.log('using custom imagery source');
+            this.data.url = imageryUrlTemplate;
+            this.imageProvider = new Cesium.UrlTemplateImageryProvider(this.data);
+        default:
+            console.log('Invalid imagery source. DEFAULT to ESRI World Imagery');
+            this.data.url = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+            this.imageProvider = new Cesium.UrlTemplateImageryProvider(this.data);
+            break;
+    };
+      console.log(this.imageProvider);
   }
 
   isReady() {
-    // TODO examine why do the readypromises differ?
-    if(this.data.source == 0) {
-      return this.imageProvider && this.imageProvider.imageurl;
-    } else {
-      return this.imageProvider && this.imageProvider.ready;
-    }    
+    return this.imageProvider && this.imageProvider.ready;  
   }
 
   ready(callback) {
-    // TODO examine why do the readypromises differ?
-    if(this.data.source == 0) {
-      this.imageProvider.readyPromise(callback);
-    } else {
-      Cesium.when(this.imageProvider.readyPromise).then(callback);
-    }
+    Cesium.when(this.imageProvider.readyPromise).then(callback);
   }
 
   // this method calculates the image tile and fractional component (ie which pixel) of the image tile to fetch
@@ -146,7 +138,7 @@ class ImageServer {
     // Here the reprojection is done on CPU...
 
     // circument a quirk with cesium data source
-    let uselod = (this.data.source == 2) ? scheme.lod+1 : scheme.lod+1;
+    let uselod = scheme.lod+1;
 
     // get image tiles at one level deeper than terrain tiles to take advantage of x lining up
     let image_lod = Math.pow(2,uselod);
